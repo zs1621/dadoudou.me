@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        Lazy.js code Reading |
+        
+        舜子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="###Lazy.js 在看源码前， 可以先看下Lazy.js的基本思想 Lazy.js 的设计模式 ###Lazy  12345Lazy([1, 2, 4]) &#x2F;&#x2F; in [1, 2, 4] -&gt; out instanceof Lazy.ArrayLikeSequence Lazy(&amp;#123; a: &#39;b&#39;&amp;#125;)Lazy(&quot;hello world&quot;)Lazy()Lazy(null)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lazy.js code Reading">
+<meta property="og:url" content="https://dadoudou.me/2013/12/18/lazy-dot-js-code-reading/">
+<meta property="og:site_name" content="舜子">
+<meta property="og:description" content="###Lazy.js 在看源码前， 可以先看下Lazy.js的基本思想 Lazy.js 的设计模式 ###Lazy  12345Lazy([1, 2, 4]) &#x2F;&#x2F; in [1, 2, 4] -&gt; out instanceof Lazy.ArrayLikeSequence Lazy(&amp;#123; a: &#39;b&#39;&amp;#125;)Lazy(&quot;hello world&quot;)Lazy()Lazy(null)">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2013-12-18T00:58:00.000Z">
+<meta property="article:modified_time" content="2020-01-22T08:32:47.961Z">
+<meta property="article:author" content="zs1621">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://dadoudou.me/index.html">Home</a>
+        
+            <a class="false" href="https://dadoudou.me/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://dadoudou.me/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">Lazy.js code Reading</h1>
+    <time id="post-date" datetime="2013-12-18T00:58:00.000Z">
+        十二月 18, 2013
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>###<a href="https://github.com/dtao/lazy.js" target="_blank" rel="noopener">Lazy.js</a></p>
+<p>在看源码前， 可以先看下Lazy.js的基本思想 <a href="https://github.com/zs1621/lazy.js/wiki/%E4%BB%8B%E7%BB%8D-LAZYJS(%E7%BF%BB%E8%AF%91)" target="_blank" rel="noopener">Lazy.js 的设计模式</a></p>
+<p>###Lazy </p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Lazy([<span class="number">1</span>, <span class="number">2</span>, <span class="number">4</span>]) <span class="comment">// in [1, 2, 4] -&gt; out instanceof Lazy.ArrayLikeSequence </span></span><br><span class="line">Lazy(&#123; <span class="attr">a</span>: <span class="string">'b'</span>&#125;)</span><br><span class="line">Lazy(<span class="string">"hello world"</span>)</span><br><span class="line">Lazy()</span><br><span class="line">Lazy(<span class="literal">null</span>)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>输入参数 Array | object | string |  | null</li>
+<li>输出 { source: [1, 2, 4] } | { source: {‘a’: b} } | { source: “hello world”} | { source: undefined }  | { source: null } </li>
+<li>可以看到输入的参数被打包成相应的对象, 而这些对象都继承自 <code>sequence</code></li>
+</ul>
+<p>###Sequence</p>
+<p><code>sequence</code> 对象提供对 0或者更多连续元素的集合 的统一的 API 封装.为什么所有的操作需要一个 sequence. 看下面的例子</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> seq = Lazy(source) <span class="comment">// 1st sequence</span></span><br><span class="line">        .map(func) <span class="comment">// 2nd MappedSequence</span></span><br><span class="line">       .filter(pred) <span class="comment">// 3rd FilteredSequence</span></span><br><span class="line">        .reverse() <span class="comment">// 4th ReversedSequence</span></span><br><span class="line">seq.each(<span class="function"><span class="keyword">function</span>(<span class="params">x</span>) </span>&#123; <span class="built_in">console</span>.log(x); &#125;)</span><br></pre></td></tr></table></figure>
+
+<p>上面这个例子中 前四步除了创建对应的sequece没有做任何的遍历source或者别的操作。 只有在第5步调用 each 时，将一次性按照鍊條(chain)的順序处理source 得到最后的结果。所以lazy做的就是延迟遍历处理数据.</p>
+<blockquote>
+<p>in fact, when i think about  the performance of <code>underscore</code> and <code>lazy.js</code>; i cann’t understand why lazy is faster.  lazy.js: 1 2s 3 underscore: 1 2 3 1 2 3 1 2 3 . so what’s the difference. lazy.js just hold off some process; i cann’t get it…. so continue to read code. &gt;_&lt; </p>
+</blockquote>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">function Sequence() &#123;&#125; # 创建Sequence构造函数</span><br></pre></td></tr></table></figure>
+
+
+<p>TBC</p>
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2020 zs1621 
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://dadoudou.me/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/transition.js"></script>
+    
+        <script src="https://dadoudou.me/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>

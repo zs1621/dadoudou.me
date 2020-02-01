@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        generic-pool Reading |
+        
+        舜子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="##node-pool ###why pool  与数据建立连接关闭连接， 每次建立一个连接对象会有消耗!(在并发很高的情况消耗会更明显)  ###what node-pool can do ?  动态调整连接数的连接池, 数据库频繁读写时, 就建多个连接, 当然连接数有最大值Max, 如果读写实际需要的连接数 &gt; Max 那么加入队列里;如果数据库读写空闲，就释放多余的连接;  ###ho">
+<meta property="og:type" content="article">
+<meta property="og:title" content="generic-pool Reading">
+<meta property="og:url" content="https://dadoudou.me/2013/12/07/generic-pool-reading/">
+<meta property="og:site_name" content="舜子">
+<meta property="og:description" content="##node-pool ###why pool  与数据建立连接关闭连接， 每次建立一个连接对象会有消耗!(在并发很高的情况消耗会更明显)  ###what node-pool can do ?  动态调整连接数的连接池, 数据库频繁读写时, 就建多个连接, 当然连接数有最大值Max, 如果读写实际需要的连接数 &gt; Max 那么加入队列里;如果数据库读写空闲，就释放多余的连接;  ###ho">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2013-12-06T18:00:00.000Z">
+<meta property="article:modified_time" content="2020-01-22T08:32:47.960Z">
+<meta property="article:author" content="zs1621">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://dadoudou.me/index.html">Home</a>
+        
+            <a class="false" href="https://dadoudou.me/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://dadoudou.me/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">generic-pool Reading</h1>
+    <time id="post-date" datetime="2013-12-06T18:00:00.000Z">
+        十二月 07, 2013
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>##<a href="https://github.com/coopernurse/node-pool" target="_blank" rel="noopener">node-pool</a></p>
+<p>###why pool</p>
+<ul>
+<li>与数据建立连接关闭连接， 每次建立一个连接对象会有消耗!(在并发很高的情况消耗会更明显)</li>
+</ul>
+<p>###what node-pool can do ?</p>
+<ul>
+<li>动态调整连接数的连接池, 数据库频繁读写时, 就建多个连接, 当然连接数有最大值Max, 如果读写实际需要的连接数 &gt; Max 那么加入队列里;如果数据库读写空闲，就释放多余的连接;</li>
+</ul>
+<p>###how node-pool do that ? -&gt; Code Reading</p>
+<ul>
+<li>栗子<script src="https://gist.github.com/zs1621/7836578.js"></script>
+
+
+</li>
+</ul>
+<p>运行上面的例子</p>
+<ol>
+<li><p>新建一个pool对象, 初始化一些变量</p>
+<ul>
+<li>idleTimeoutMillis: 一个连接空闲时间最大值, 如果设置为30000, 那么一个连接空闲30000ms 后会自动关闭, 默认 30000ms</li>
+<li>reapIntervalMillis:  每<code>reapIntervalMillis</code>检查空闲并移除, 默认1000ms</li>
+<li>max: 连接池存在的最大连接数, 例子里设置为10</li>
+<li>min: 连接池存在的最小连接数, 例子里默认为0(备注: 这里有个疑问，当我将min设为1, 从mongodb log 中可以看到 在空闲时间 连接是每隔<code>idleTimeoutMillis</code>关闭并新建连接, 问题是为什么不保持一个连接而要不停的关闭新建, 如果这样不如)</li>
+<li>log: 可以自定义node-pool, 例子直接设为true 默认用node-pool提供的log </li>
+<li>create: 应该创建一个item(db) 被 <code>acquired</code>, 然后调用其创建的 item 作为参数</li>
+<li>destory: 在items毁之前,关闭所有资源使用的item(db) </li>
+</ul>
+</li>
+<li><p>ensureMinimum, 确保有最小连接数</p>
+<ul>
+<li>例子中如果给min赋一个大于0的值, 2, 那么就 createResource()两次 </li>
+<li>因为例子默认为0 跳过</li>
+</ul>
+</li>
+<li><p>至此已经建立pool, 下一步等待<code>acquired</code>, 资源准备就续, 就等消费了 </p>
+</li>
+<li><p><code>curl http://127.0.0.1:8080</code></p>
+</li>
+<li><p><code>acquire(callback, priority)</code>  </p>
+<ul>
+<li>waitingClients.enqueue(callback, priority): 将回调根据priority推入队列</li>
+<li>dispense(): 由单词意思可知分配资源， 施行; 试着拿一个客户端工作， 清除空闲的item. 如果有等待的client, shift(), call its callback. 如果没有等待的client, 创建一个; 如果创建一个client将超过max, 把客户端加入等待list!代码见 <a href="#dispense">dispense</a></li>
+<li>dispense() 结束,此时 waitingClients.size() = 0, availableObjects.length = 0</li>
+</ul>
+</li>
+<li><p>release(): 如果client不再需要，将之返回pool, 代码见<a href="#release">release</a>  </p>
+</li>
+<li><p>removeIdle(): check and removes the available clients that have timed out. 见<a href="#removeIdle">removeIdle</a></p>
+</li>
+<li><p>me.destroy(): client to be destroyed.见<a href="#destroy">destroy</a></p>
+</li>
+</ol>
+<p><a name="dispense" id="despense"><strong>dispense</strong></a></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">dispense</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> obj = <span class="literal">null</span>, </span><br><span class="line">    objWithTimeout = <span class="literal">null</span>,</span><br><span class="line">    err = <span class="literal">null</span>,</span><br><span class="line">    clientCb = <span class="literal">null</span>,</span><br><span class="line">    waitingCount = waitingClients.size();</span><br><span class="line">    log(<span class="string">"..."</span>);</span><br><span class="line">    <span class="keyword">if</span> (waitingCount &gt; <span class="number">0</span>) &#123; <span class="comment">//此时waitingCount = 1</span></span><br><span class="line">        <span class="keyword">while</span>(availableObjects.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            log(<span class="string">"..."</span>);    </span><br><span class="line">            objWithTimeout = avaiableObjects[<span class="number">0</span>];</span><br><span class="line">            <span class="keyword">if</span> (!factory.validate(objWithTimeout.obj)) &#123;</span><br><span class="line">                me.destroy(objWithTimeout.obj);     </span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125; <span class="comment">// 这一步验证对象</span></span><br><span class="line">            avaiableObjects.shift(); <span class="comment">// LIFO</span></span><br><span class="line">            clientCb = waitingClients.dequeue(); <span class="comment">// dequeue</span></span><br><span class="line">            <span class="keyword">return</span> clientCb(err, objWithTimeout.obj); <span class="comment">// callback</span></span><br><span class="line">        &#125;     </span><br><span class="line">        <span class="keyword">if</span> (count &lt; factory.max) &#123;</span><br><span class="line">                createResource();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><a name="release" id="release"><strong>release</strong></a></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">me.release = <span class="function"><span class="keyword">function</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">    <span class="comment">// 确保对象已经被释放</span></span><br><span class="line">    <span class="keyword">if</span> (availableObjects.some(<span class="function"><span class="keyword">function</span>(<span class="params">objWithTimeout</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> (objWithTimeout.obj === obj); </span><br><span class="line">        &#125;)) &#123;</span><br><span class="line">        log(<span class="string">"release called twice for the same resource"</span>)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;     </span><br><span class="line">    <span class="keyword">var</span> objWithTimeout = &#123; <span class="attr">obj</span>: obj, <span class="attr">timeout</span>: (<span class="keyword">new</span> <span class="built_in">Date</span>().getTime() + idleTimeoutMillis) &#125;;</span><br><span class="line">    availableObjects.push(objWithTimeout); <span class="comment">// 此时 availableObjects.size()=1</span></span><br><span class="line">    log(<span class="string">"timeout:.."</span>);</span><br><span class="line">    dispense();  </span><br><span class="line">    scheduleRemoveIdle(); <span class="comment">// 计划移走idle items(空闲项目) 延迟1000ms 执行 removeIdle</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p><a name="removeIdle" id="removeIdle"><strong>removeIdle</strong></a></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">removeIdle</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">   <span class="keyword">var</span> toRemove = [],</span><br><span class="line">       now = <span class="keyword">new</span> <span class="built_in">Date</span>().getTime(),</span><br><span class="line">       i,</span><br><span class="line">       al, tr,</span><br><span class="line">       timeout;</span><br><span class="line">   removeIdleScheduled = <span class="literal">false</span>;</span><br><span class="line">   <span class="comment">// go through the available(idle) items, check if they have timed out;</span></span><br><span class="line">   <span class="keyword">for</span> (i=<span class="number">0</span>, al=availableObjects.length; i&lt; al &amp;&amp;</span><br><span class="line">       (refreshIdle) || (count - factory.min &gt; toRemove.length));i+=<span class="number">1</span></span><br><span class="line">       )&#123;</span><br><span class="line">       timeout = availableObjects[i].timeout; </span><br><span class="line">       <span class="keyword">if</span> (now &gt;= timeout) &#123;</span><br><span class="line">          <span class="comment">//client timed out, so destroy it </span></span><br><span class="line">          toRemove.push(availableObjects[i].obj);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">for</span> (i=<span class="number">0</span>, tr=toRemove.length; i&lt;tr; i+=<span class="number">1</span>) &#123;</span><br><span class="line">           me.destroy(toRemove[i]);     </span><br><span class="line">       &#125;</span><br><span class="line">       al = availableObjects.length;</span><br><span class="line">       <span class="keyword">if</span> (al &gt; <span class="number">0</span>) &#123;</span><br><span class="line">          log(<span class="string">".."</span>); </span><br><span class="line">          scheduleRemoveIdle();</span><br><span class="line">       &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">           log(<span class="string">"removeIdle() all objects removed"</span>, <span class="string">'verbose'</span>);     </span><br><span class="line">       &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p><a name="destroy" id="destroy"><strong>destroy</strong></a></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">me.destroy = <span class="function"><span class="keyword">function</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">   count -= <span class="number">1</span>; </span><br><span class="line">   availableOjbects = availableObjects.filter(<span class="function"><span class="keyword">function</span>(<span class="params">objWithTimeout</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> (objWithTimeout.obj != obj) </span><br><span class="line">       &#125;);<span class="comment">//过滤掉return true 的对象</span></span><br><span class="line">   factory.destroy(obj);</span><br><span class="line">   ensureMinimum();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2020 zs1621 
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://dadoudou.me/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/transition.js"></script>
+    
+        <script src="https://dadoudou.me/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>

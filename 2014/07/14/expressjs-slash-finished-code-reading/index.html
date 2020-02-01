@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        expressjs/finished Code Reading |
+        
+        舜子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="##* finished   功能: 在请求关闭，完成， 或者出错时执行回调 用例: 清除传输流。例如为了防止文件描述符泄漏，在socket出错时， 你会想要将文件流摧毁  ##从一个koa例子开始 1234567var onFinished &#x3D; require(&#39;finished&#39;);function* () &amp;#123;    var stream &#x3D; th">
+<meta property="og:type" content="article">
+<meta property="og:title" content="expressjs&#x2F;finished Code Reading">
+<meta property="og:url" content="https://dadoudou.me/2014/07/14/expressjs-slash-finished-code-reading/">
+<meta property="og:site_name" content="舜子">
+<meta property="og:description" content="##* finished   功能: 在请求关闭，完成， 或者出错时执行回调 用例: 清除传输流。例如为了防止文件描述符泄漏，在socket出错时， 你会想要将文件流摧毁  ##从一个koa例子开始 1234567var onFinished &#x3D; require(&#39;finished&#39;);function* () &amp;#123;    var stream &#x3D; th">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2014-07-14T03:57:26.000Z">
+<meta property="article:modified_time" content="2020-01-22T08:32:47.963Z">
+<meta property="article:author" content="zs1621">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://dadoudou.me/index.html">Home</a>
+        
+            <a class="false" href="https://dadoudou.me/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://dadoudou.me/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">expressjs/finished Code Reading</h1>
+    <time id="post-date" datetime="2014-07-14T03:57:26.000Z">
+        七月 14, 2014
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>##* <a href="https://github.com/expressjs/finished" target="_blank" rel="noopener">finished</a> </p>
+<ul>
+<li>功能: 在请求关闭，完成， 或者出错时执行回调</li>
+<li>用例: 清除传输流。例如为了防止文件描述符泄漏，在socket出错时， 你会想要将文件流摧毁</li>
+</ul>
+<p>##<strong>从一个koa例子开始</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var onFinished &#x3D; require(&#39;finished&#39;);</span><br><span class="line">function* () &#123;</span><br><span class="line">    var stream &#x3D; this.body &#x3D; fs.createReadStream(&#39;thingie.json&#39;);   </span><br><span class="line">    onFinished(this, function(err) &#123;</span><br><span class="line">        stream.destroy();    </span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>再看finished的代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">module.exports &#x3D; function finished (thingie, callback) &#123;</span><br><span class="line">    &#x2F;*</span><br><span class="line">     * 主要需要監測socket和res的事件 </span><br><span class="line">     *&#x2F;</span><br><span class="line">    var socket &#x3D; thingie.socket || thingie;    </span><br><span class="line">    var res &#x3D; thingie.res || thingie; </span><br><span class="line"></span><br><span class="line">    &#x2F;*</span><br><span class="line">     * res完成或者socket不可寫的時候， 直接執行callback, 返回thingie</span><br><span class="line">     *&#x2F;</span><br><span class="line">    if ( res.finished || !socket.writable) &#123;</span><br><span class="line">        defer(callback);    </span><br><span class="line">        return thingie;</span><br><span class="line">    &#125;;  </span><br><span class="line"></span><br><span class="line">    &#x2F;*</span><br><span class="line">     * 第一次運行時listener 和 res.__onFinished 是不存在的</span><br><span class="line">     *&#x2F;</span><br><span class="line">    var listener &#x3D; res.__onFinished;</span><br><span class="line"></span><br><span class="line">    if (!listener || !listener.queue) &#123;</span><br><span class="line">        listener &#x3D; res.__onFinished &#x3D; function onFinished(err)  &#123;</span><br><span class="line">            if (res.__onFinished &#x3D;&#x3D;&#x3D; listener) res.__onFinished &#x3D; null; &#x2F;&#x2F; 這句表明每次給listener 賦完值， res.__onFinished &#x3D; null;</span><br><span class="line">            var queue &#x3D; listener.queue || [];</span><br><span class="line">            while (queue.length) queue.shift()(err)</span><br><span class="line">        &#125;   </span><br><span class="line">        listerner.queue &#x3D; [];</span><br><span class="line"></span><br><span class="line">        first([</span><br><span class="line">            [socket, &#39;error&#39;, &#39;close&#39;], </span><br><span class="line">            [res, &#39;finish&#39;],</span><br><span class="line">        ], listener); &#x2F;&#x2F; 看[first](https:&#x2F;&#x2F;github.com&#x2F;jonathanong&#x2F;ee-first)模块解析: 主要功能在监听到指定的事件的第一件时，触发响应回调， 并清除移除所有的监听。</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    listener.queue.push(callback);</span><br><span class="line"></span><br><span class="line">    return thingie;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>##<em>想要具体看finish的应用场景，其实在<a href="https://github.com/expressjs/finished/blob/master/test/test.js" target="_blank" rel="noopener">单元测试</a>里有很多具体的例子</em></p>
+<ul>
+<li>下面具体理解下其中的一个单元测试</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">describe(&#39;when the request finished&#39;, function () &#123;</span><br><span class="line">   it(&#39;should execute the callback when called after finish&#39;, function(done)&#123;</span><br><span class="line">       var server &#x3D; http.createServer(function(req, res)&#123;</span><br><span class="line">           onFinished(res, function()&#123;</span><br><span class="line">               &#x2F;&#x2F;第4步</span><br><span class="line">               onFinished(res, done); &#x2F;&#x2F; 第5步   </span><br><span class="line">           &#125;) &#x2F;&#x2F; 第2步   </span><br><span class="line">           setTimeout(res.end.bind(res), 0); &#x2F;&#x2F; 第3步</span><br><span class="line">       &#125;)  &#x2F;&#x2F; 第 0 步  </span><br><span class="line">       server.listen(function()&#123;</span><br><span class="line">           var port &#x3D; this.address().port;    </span><br><span class="line">           http.get(&#39;http:&#x2F;&#x2F;127.0.0.1:&#39; + port, function()&#123;</span><br><span class="line">               res.resume();</span><br><span class="line">               res.on(&#39;close&#39;, server.close.bind(server));</span><br><span class="line">           &#125;) &#x2F;&#x2F;第1步</span><br><span class="line">       &#125;)</span><br><span class="line">   &#125;)    </span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+
+<ul>
+<li><strong>测试步骤</strong><ul>
+<li>先创建服务器 第0步</li>
+<li>监听端口,做出请求 第一步</li>
+<li>服务器收到请求， 执行回调函数 <code>onFinished(res, function(){})</code> 第2步</li>
+<li>第3步的话  结束请求 res.end.bind(res)</li>
+<li>第4步  监听到结束, 执行回调 <code>onFinished(res, done)</code></li>
+<li>第5步  完成done</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><strong>测试结论</strong>:当服务器完成请求后，有onFinished()的话， 直接执行回调, 然后结束</li>
+</ul>
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2020 zs1621 
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://dadoudou.me/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/transition.js"></script>
+    
+        <script src="https://dadoudou.me/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>

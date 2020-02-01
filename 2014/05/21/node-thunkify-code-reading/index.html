@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        node-thunkify Code Reading |
+        
+        舜子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="##thunkify ##code 12345678910111213141516171819202122function thunkify(fn) &amp;#123;    assert(&#39;function&#39; &#x3D;&#x3D; typeof fn, &#39;function required&#39;);        return function () &amp;#123;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="node-thunkify Code Reading">
+<meta property="og:url" content="https://dadoudou.me/2014/05/21/node-thunkify-code-reading/">
+<meta property="og:site_name" content="舜子">
+<meta property="og:description" content="##thunkify ##code 12345678910111213141516171819202122function thunkify(fn) &amp;#123;    assert(&#39;function&#39; &#x3D;&#x3D; typeof fn, &#39;function required&#39;);        return function () &amp;#123;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2014-05-21T04:02:00.000Z">
+<meta property="article:modified_time" content="2020-01-22T08:32:47.962Z">
+<meta property="article:author" content="zs1621">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://dadoudou.me/index.html">Home</a>
+        
+            <a class="false" href="https://dadoudou.me/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://dadoudou.me/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">node-thunkify Code Reading</h1>
+    <time id="post-date" datetime="2014-05-21T04:02:00.000Z">
+        五月 21, 2014
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>##<a href="https://github.com/visionmedia/node-thunkify" target="_blank" rel="noopener">thunkify</a></p>
+<p>##code</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">function thunkify(fn) &#123;</span><br><span class="line">    assert(&#39;function&#39; &#x3D;&#x3D; typeof fn, &#39;function required&#39;);    </span><br><span class="line"></span><br><span class="line">    return function () &#123;</span><br><span class="line">        var args &#x3D; slice.call(arguments);    </span><br><span class="line">        var ctx &#x3D; this;</span><br><span class="line">        return function (done) &#123;   &#x2F;&#x2F; done 是回调函数</span><br><span class="line">            var called;</span><br><span class="line">            args.push(function() &#123;</span><br><span class="line">                if (called) return;</span><br><span class="line">                called &#x3D; true;    </span><br><span class="line">                done.apply(null, arguments); </span><br><span class="line">            &#125;); &#x2F;&#x2F; 将回调处理加入参数列表</span><br><span class="line"></span><br><span class="line">            try &#123;</span><br><span class="line">                fn.apply(ctx, args);   &#x2F;&#x2F; 函数处理 </span><br><span class="line">            &#125; catch (err) &#123;</span><br><span class="line">                done(err);   &#x2F;&#x2F; 异常获取并用回调处理 </span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+
+<p>##例子</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">var thunkify &#x3D; require(&#39;thunkify&#39;);</span><br><span class="line">var fs &#x3D; require(&#39;fs&#39;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">var read &#x3D; thunkify(fs.readFile);</span><br><span class="line"></span><br><span class="line">read(&#39;package.json&#39;, &#39;utf8&#39;)(function(err, str)&#123;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2020 zs1621 
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://dadoudou.me/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/transition.js"></script>
+    
+        <script src="https://dadoudou.me/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>

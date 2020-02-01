@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        Tornado code Reading |
+        
+        舜子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="##服务器建立 HTTPServer 应用 123456application &#x3D; web.Application([(r&quot;&#x2F;&quot;, MainPageHandler),	])http_server &#x3D; httpserver.HTTPServer(application)http_server.listen(8080)ioloop.IOLoop.ins">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tornado code Reading">
+<meta property="og:url" content="https://dadoudou.me/2013/09/04/tornado-code-reading/">
+<meta property="og:site_name" content="舜子">
+<meta property="og:description" content="##服务器建立 HTTPServer 应用 123456application &#x3D; web.Application([(r&quot;&#x2F;&quot;, MainPageHandler),	])http_server &#x3D; httpserver.HTTPServer(application)http_server.listen(8080)ioloop.IOLoop.ins">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2013-09-04T05:26:00.000Z">
+<meta property="article:modified_time" content="2020-01-22T08:32:47.957Z">
+<meta property="article:author" content="zs1621">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://dadoudou.me/index.html">Home</a>
+        
+            <a class="false" href="https://dadoudou.me/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://dadoudou.me/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">Tornado code Reading</h1>
+    <time id="post-date" datetime="2013-09-04T05:26:00.000Z">
+        九月 04, 2013
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>##服务器建立</p>
+<p><a href="https://github.com/facebook/tornado/blob/master/tornado/httpserver.py" target="_blank" rel="noopener">HTTPServer</a></p>
+<p><strong>应用</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">application &#x3D; web.Application([</span><br><span class="line">(r&quot;&#x2F;&quot;, MainPageHandler),	</span><br><span class="line">])</span><br><span class="line">http_server &#x3D; httpserver.HTTPServer(application)</span><br><span class="line">http_server.listen(8080)</span><br><span class="line">ioloop.IOLoop.instance().start()</span><br></pre></td></tr></table></figure>
+
+<p>对照应用例子理解源码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">def __init__(self, request_callback, no_keep_alive&#x3D;False, io_loop&#x3D;None,</span><br><span class="line">                 xheaders&#x3D;False, ssl_options&#x3D;None, protocol&#x3D;None, **kwargs):</span><br><span class="line">        self.request_callback &#x3D; request_callback</span><br><span class="line">        self.no_keep_alive &#x3D; no_keep_alive</span><br><span class="line">        self.xheaders &#x3D; xheaders</span><br><span class="line">        self.protocol &#x3D; protocol</span><br><span class="line">        TCPServer.__init__(self, io_loop&#x3D;io_loop, ssl_options&#x3D;ssl_options,</span><br><span class="line">                           **kwargs) #HTTPServer 继承自 TCPServer, 初始化TCPServer</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数</strong></p>
+<ul>
+<li>request_callback: 必须产生一个http回复, 例子中 application 即是回复</li>
+<li>xheaders: True(支持通过<code>x-real-ip</code>或<code>x-forwarded-for</code>获取ip) False(当torando之前有反向代理或者负载均衡self.request.remote_ip只能获得127.0.0.1)</li>
+<li>ssl_options: ssl传输数据</li>
+</ul>
+<p>ssl_options 使用例子 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HTTPServer(applicaton, ssl_options&#x3D;&#123;</span><br><span class="line">   &quot;certfile&quot;: os.path.join(data_dir, &quot;mydomain.crt&quot;),</span><br><span class="line">   &quot;keyfile&quot;: os.path.join(data_dir, &quot;mydomain.key&quot;),</span><br><span class="line">	&#125;)</span><br></pre></td></tr></table></figure>
+<p>下面应该说下 <code>TCPServer</code> 主体内容在 <code>TCPServer</code>, </p>
+<p><a href="https://github.com/facebook/tornado/blob/master/tornado/tcpserver.py" target="_blank" rel="noopener">TCPServer</a></p>
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2020 zs1621 
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://dadoudou.me/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/transition.js"></script>
+    
+        <script src="https://dadoudou.me/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>

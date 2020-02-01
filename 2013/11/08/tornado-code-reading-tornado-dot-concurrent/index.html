@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        Tornado Code Reading - tornado.concurrent |
+        
+        舜子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="##Future背景Future 代表一个函数的调用结果. 函数返回一个值或者抛出一个异常， 所以future 包含一个值或者一个异常(可以通过future.result()获得这个结果，异常和返回值). Fuures存在与对应的函数结束前. 在 一个  多线程场景下,简单的调用 future.result()等待另外一个线程或者进程完成。在 异步场景下，你可以附带一个callback给futur">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tornado Code Reading - tornado.concurrent">
+<meta property="og:url" content="https://dadoudou.me/2013/11/08/tornado-code-reading-tornado-dot-concurrent/">
+<meta property="og:site_name" content="舜子">
+<meta property="og:description" content="##Future背景Future 代表一个函数的调用结果. 函数返回一个值或者抛出一个异常， 所以future 包含一个值或者一个异常(可以通过future.result()获得这个结果，异常和返回值). Fuures存在与对应的函数结束前. 在 一个  多线程场景下,简单的调用 future.result()等待另外一个线程或者进程完成。在 异步场景下，你可以附带一个callback给futur">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2013-11-08T05:38:00.000Z">
+<meta property="article:modified_time" content="2020-01-22T08:32:47.960Z">
+<meta property="article:author" content="zs1621">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://dadoudou.me/index.html">Home</a>
+        
+            <a class="false" href="https://dadoudou.me/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://dadoudou.me/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">Tornado Code Reading - tornado.concurrent</h1>
+    <time id="post-date" datetime="2013-11-08T05:38:00.000Z">
+        十一月 08, 2013
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>##Future背景<br>Future 代表一个函数的调用结果. 函数返回一个值或者抛出一个异常， 所以future 包含一个值或者一个异常(可以通过future.result()获得这个结果，异常和返回值). Fuures存在与对应的函数结束前. 在 一个  多线程场景下,简单的调用 future.result()等待另外一个线程或者进程完成。在 异步场景下，你可以附带一个callback给future为了当调用结束可以得到通知。（with future.add_done_callback or io_loop.add_future） </p>
+<p>##了解 Future<br><code>Futures</code> 已经在Python3.2应用了 <a href="http://python.readthedocs.org/en/latest/library/concurrent.futures.html#concurrent.futures" target="_blank" rel="noopener">concurrent.futures</a> , 如果在python3.2之前版本用 可以 (pip install futures). 那在 tornado 中如果可以将用就用python包，否则将会使用一个兼容的类 <code>tornado.concurrent.Future</code> </p>
+<h2 id="class-tornado-concurrent-Future"><a href="#class-tornado-concurrent-Future" class="headerlink" title="class tornado.concurrent.Future"></a>class tornado.concurrent.Future</h2><p><strong>这个类封装了异步操作的结果</strong>。在同步程序中， Futures被用来等待一个线程或者进程池的结果。在Tornado一般用在 IOLoop.add_future 或者 在一个 gen.coroutine </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&quot;&quot;&quot;</span><br><span class="line">如果有 concurrent.futures 可用，那就用它; 否则用 _DummyFuture </span><br><span class="line">&quot;&quot;&quot;</span><br><span class="line">if futures is None:</span><br><span class="line">    Future &#x3D; _DummyFuture</span><br><span class="line">else:</span><br><span class="line">    Future &#x3D; futures.Future</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="DummyFuture"><a href="#DummyFuture" class="headerlink" title="_DummyFuture"></a>_DummyFuture</h2><ul>
+<li>result</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&quot;&quot;&quot;</span><br><span class="line">先检查有没有完成 ，没有完成 ,直接抛出异常!如果有异常就raise 异常，否则返回 result</span><br><span class="line">&quot;&quot;&quot;</span><br><span class="line">def result(self, timeout&#x3D;None):</span><br><span class="line">	self._check_done()</span><br><span class="line">	if self._exception:</span><br><span class="line">		raise self._exception</span><br><span class="line">	return self._result</span><br></pre></td></tr></table></figure>
+<ul>
+<li>exception</li>
+</ul>
+<p>这个函数先与result唯一的不同是 无异常的时候 return None ;</p>
+<ul>
+<li>add_done_callback(fn)</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="string">给Future加入一个回调。当它完成将会 以Future为参数调用回调函数. </span></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add_done_callback</span><span class="params">(self, fn)</span>:</span></span><br><span class="line">	<span class="keyword">if</span> self.done:</span><br><span class="line">		fn(self)</span><br><span class="line">	<span class="keyword">else</span>:</span><br><span class="line">		self._callbacks.append(fn)</span><br></pre></td></tr></table></figure>
+
+<h2 id="TracebackFuture"><a href="#TracebackFuture" class="headerlink" title="TracebackFuture"></a>TracebackFuture</h2><p>存储 异常的追踪</p>
+<h2 id="DummyExecutor"><a href="#DummyExecutor" class="headerlink" title="DummyExecutor"></a>DummyExecutor</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">class DummyExecutor(object):</span><br><span class="line">	def submit(self, fn, *args, **kwargs):</span><br><span class="line">		future &#x3D; TracebackFuture()</span><br><span class="line">		try:</span><br><span class="line">			future.set_result(fn(*args, **kwargs))</span><br><span class="line">		except Exception:</span><br><span class="line">			future.set_exc_info(sys.exc_info())</span><br><span class="line">		return future</span><br><span class="line">	def shutdown(self, wait&#x3D;True):</span><br><span class="line">		pass</span><br></pre></td></tr></table></figure>
+
+<h2 id="run-on-executor"><a href="#run-on-executor" class="headerlink" title="run_on_executor"></a>run_on_executor</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">run_on_executor</span><span class="params">(fn)</span>:</span></span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    异步的跑同步方法</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"><span class="meta">    @functools.wraps(fn):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span><span class="params">(self, *args, **kwargs)</span>:</span></span><br><span class="line">        callback = kwargs.pop(<span class="string">"callback"</span>, <span class="literal">None</span>)</span><br><span class="line">        future = self.executor.submit(fn, self, *args, **kwargs) <span class="comment">#self.executor  理解为线程池</span></span><br><span class="line">        <span class="keyword">if</span> callback:</span><br><span class="line">            self.io_loop.add_future(future, \</span><br><span class="line">                <span class="keyword">lambda</span> future: callback(future.result()))</span><br><span class="line">        <span class="keyword">return</span> future</span><br><span class="line">    <span class="keyword">return</span> wrapper</span><br></pre></td></tr></table></figure>
+
+<p>这里有关于<code>run_on_executor</code>的应用例子 <a href="https://gist.github.com/zs1621/7921770" target="_blank" rel="noopener">https://gist.github.com/zs1621/7921770</a></p>
+<h2 id="return-future"><a href="#return-future" class="headerlink" title="return_future"></a>return_future</h2><ul>
+<li>what use: 让函数通过回调返回一个<code>Future</code></li>
+<li>how use: @return_future</li>
+</ul>
+<blockquote>
+<p>看 tornado 源码的 test文件 concurrent_test.py; </p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ReturnFutureTest</span><span class="params">(AsyncTestCase)</span>:</span></span><br><span class="line"><span class="meta">    @return_future</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">sync_future</span><span class="params">(self, callback)</span>:</span> <span class="comment"># 同步future</span></span><br><span class="line">        <span class="keyword">print</span> (callback, <span class="string">'+++++++++++++++'</span>) <span class="comment"># d -&gt; 对应log 的d</span></span><br><span class="line">        callback(<span class="number">42</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">    @return_future</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">async_future</span><span class="params">(self, callback)</span>:</span> <span class="comment">#异步future</span></span><br><span class="line">        <span class="keyword">print</span> (callback, <span class="string">'+++++++++++++++'</span>) <span class="comment"># d -&gt; 对应 log 的 d</span></span><br><span class="line">        self.io_loop.add_callback(callback, <span class="number">42</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">test_sync_future</span><span class="params">(self)</span>:</span> <span class="comment">#测试同步 </span></span><br><span class="line">        future = self.sync_future()</span><br><span class="line">        self.assertEqual(future.result(), <span class="number">42</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">test_async_future</span><span class="params">(self)</span>:</span> <span class="comment">#测试异步</span></span><br><span class="line">        future = self.async_future()</span><br><span class="line">        self.assertFalse(future.done())</span><br><span class="line">        self.io_loop.add_future(future, self.stop) <span class="comment">#add_future</span></span><br><span class="line">        future2 = self.wait()</span><br><span class="line">        self.assertIs(future, future2)</span><br><span class="line">        self.assertEqual(future.result(), <span class="number">42</span>)</span><br></pre></td></tr></table></figure>
+
+<p>联合 concurrent.py -&gt; return_future</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">return_future</span><span class="params">(f)</span>:</span></span><br><span class="line">    replacer = ArgReplacer(f, <span class="string">'callback'</span>) <span class="comment"># 1 </span></span><br><span class="line"></span><br><span class="line"><span class="meta">    @fuctools.wraps(f)</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span><span class="params">(*args, **kwrags)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> (args, kwrags, <span class="string">"argsssssssss"</span>) <span class="comment">#a 对应下面的 log -&gt; a</span></span><br><span class="line">        future = TracebackFuture() <span class="comment"># 2</span></span><br><span class="line">        callback, args, kwargs = replacer.replace(</span><br><span class="line">            <span class="keyword">lambda</span> value=_NO_RESULT: future.set_result(value),</span><br><span class="line">            args, kwargs) <span class="comment"># 1  替代 f 函数的 `callback`,  </span></span><br><span class="line">        <span class="keyword">print</span> (callback, args, kwargs, <span class="string">'callback'</span>) <span class="comment">#b 对应下面的 log -&gt; b</span></span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">handle_error</span><span class="params">(typ, value, tb)</span>:</span></span><br><span class="line">            future.set_exc_info((typ, value, tb))</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">        exc_info = <span class="literal">None</span></span><br><span class="line">        <span class="keyword">with</span> ExceptionStackContext(handle_error): <span class="comment"># 4</span></span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                result = f(*args, **kwargs) </span><br><span class="line">                <span class="keyword">print</span> (result, <span class="string">'result-------------------'</span>) <span class="comment">#c 对应下面的 log -&gt; c</span></span><br><span class="line">                <span class="keyword">if</span> result <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">                        <span class="keyword">raise</span> ReturnValueIgoredError(</span><br><span class="line">                            <span class="string">"@return_future should not be used with functions"</span></span><br><span class="line">                            <span class="string">"that return values"</span>)</span><br><span class="line">            <span class="keyword">except</span>:</span><br><span class="line">                exc_info = sys.exc_info()</span><br><span class="line">                <span class="keyword">raise</span></span><br><span class="line">        <span class="keyword">if</span> exc_info <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            raise_exc_info(exc_info)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> callback <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="function"><span class="keyword">def</span> <span class="title">run_callback</span><span class="params">(future)</span>:</span></span><br><span class="line">                result = future.result()</span><br><span class="line">                <span class="keyword">print</span> (future, <span class="string">"+__+_+_+_+_"</span>) <span class="comment">#e -&gt; 对应下面 ＬＯＧ -&gt; e</span></span><br><span class="line">                <span class="keyword">if</span> result <span class="keyword">is</span> _NO_RESULT:</span><br><span class="line">                    callback()</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    callback(future.result())</span><br><span class="line">            future.add_done_callback(wrap(run_callback)) <span class="comment"># 6</span></span><br><span class="line">        <span class="keyword">return</span> future</span><br><span class="line">    <span class="keyword">return</span> wrapper</span><br></pre></td></tr></table></figure>
+
+<p>###分几种情况 1. 同步无回调 2.同步有回调 3.异步无回调 4.异步有回调</p>
+<ul>
+<li><strong>同步无回调LOG</strong>  <code>f(args, kwargs): future = sync_process()</code><ul>
+<li><em>a</em> –  (&lt;test_return_future.ReturnFutureTest testMethod=test_no_callback&gt;,) {} argsssssssss</li>
+<li><em>b</em> – None (&lt;test_return_future.ReturnFutureTest testMethod=test_no_callback&gt;,) {‘callback’: &lt;function <lambda> at 0xb6ba8f0c&gt;} callback</li>
+<li><em>c</em> – None result—————— </li>
+<li><em>d</em> – (function <lambda> at 0xb6ba8f0c&gt;) +++++++++++++</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>从 a-b 可以理解 replacer.replace 的作用: 提取callback 的值， 并将callback 放入kwargs; 由c 可以知道 f() 函数是不会return 的; f()的结果只能由 future.result() 得到, 只要知道reuturn_future 是返回Future 本身是不会return 的， 如果return 就会报错; 由d 可知匿名函数<code>fuction &lt;lambda&gt; at 0xb6ba8f0c</code>赋值给了callback,而这个匿名函数的作用就是<code>set_result</code>。</p>
+</blockquote>
+<ul>
+<li><strong>同步有回调LOG</strong> <code>f(args, kwargs, callback): future = sync_process() callback(future)</code><ul>
+<li><em>a</em> – (&lt;test_return_future.ReturnFutureTest testMethod=test_callback_kw&gt;,) {‘callback’:&lt;bound method ReturnFutureTest.stop of &lt;test_return_future.ReturnFutureTest testMethod=test_callback_kw&gt;&gt;} argsssssssss</li>
+<li><em>b</em> – &lt;bound method ReturnFutureTest.stop of &lt;test_return_future.ReturnFutureTest testMethod=test_callback_kw&gt;&gt; (&lt;test_return_future.ReturnFutureTest testMethod=test_callback_kw&gt;,) {‘callback’: &lt;function <lambda> at 0xb6bd8f44&gt;} callback  </li>
+<li><em>c</em> –  None result——————</li>
+<li><em>d</em> – 额额 function <lambda> at 0xb6bd8f44 +++++++++++++ </li>
+<li><em>e</em> – 额额 Future at 0xb6b9cc8cL state=finished returned int +<em>_+</em>+<em>+</em>+_ </li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>与无回调相比; 明显多出 e log; run_callback 就是将 future.result()作为callback的参数运行; </p>
+</blockquote>
+<ul>
+<li><strong>异步无回调LOG</strong> <code>f(args, kwargs): future = async_process()</code><ul>
+<li><em>a</em> – (&lt;test_return_future.ReturnFutureTest testMethod=test_async_future&gt;,) {} argsssssssss </li>
+<li><em>b</em> – None (&lt;test_return_future.ReturnFutureTest testMethod=test_async_future&gt;,) {‘callback’: &lt;function <lambda> at 0x8518f44&gt;} callback </li>
+<li><em>c</em> – None result—————— </li>
+<li><em>d</em> – (function <lambda> at 0x8518f44) ++++++++++++++ </li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>与同步无回调相比; 看<code>test_async_future(self)</code>, 将 f() 获得的 future -&gt; self.io_loop.add_future(future, self.stop) -&gt; self.stop(future) -&gt; 最后通过 self.wait()获得的结果 就是 例子中42 . 现实中一般将 return_future 与 gen.engine 联合使用  , 通过在 gen.engine -&gt; yield f() 获得结果</p>
+</blockquote>
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2020 zs1621 
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://dadoudou.me/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/transition.js"></script>
+    
+        <script src="https://dadoudou.me/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>

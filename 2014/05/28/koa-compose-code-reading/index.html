@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        koa-compose Code Reading |
+        
+        舜子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="##compose 1234567891011121314function compose(middleware) &amp;#123;   return function *(next) &amp;#123;        var i &#x3D; middleware.length;           var prev &#x3D; next || noop ();        var curr;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="koa-compose Code Reading">
+<meta property="og:url" content="https://dadoudou.me/2014/05/28/koa-compose-code-reading/">
+<meta property="og:site_name" content="舜子">
+<meta property="og:description" content="##compose 1234567891011121314function compose(middleware) &amp;#123;   return function *(next) &amp;#123;        var i &#x3D; middleware.length;           var prev &#x3D; next || noop ();        var curr;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2014-05-28T02:37:00.000Z">
+<meta property="article:modified_time" content="2020-01-22T08:32:47.962Z">
+<meta property="article:author" content="zs1621">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://dadoudou.me/index.html">Home</a>
+        
+            <a class="false" href="https://dadoudou.me/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://dadoudou.me/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">koa-compose Code Reading</h1>
+    <time id="post-date" datetime="2014-05-28T02:37:00.000Z">
+        五月 28, 2014
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>##<strong><a href="https://github.com/koajs/compose/blob/master/index.js" target="_blank" rel="noopener">compose</a></strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">function compose(middleware) &#123;</span><br><span class="line">   return function *(next) &#123;</span><br><span class="line">        var i &#x3D; middleware.length;   </span><br><span class="line">        var prev &#x3D; next || noop ();</span><br><span class="line">        var curr;</span><br><span class="line">        </span><br><span class="line">        while (i--) &#123;</span><br><span class="line">            curr &#x3D; middleware[1];    </span><br><span class="line">            prev &#x3D; curr.call(this, prev); &#x2F;&#x2F; </span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        yield *prev;</span><br><span class="line">   &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>看下例的运行效果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">var co &#x3D; require(&#39;co&#39;);</span><br><span class="line"></span><br><span class="line">var stack &#x3D; [];</span><br><span class="line">var arr &#x3D; [];</span><br><span class="line">stack.push(function *(next) &#123;</span><br><span class="line">    arr.push(1);    </span><br><span class="line">    yield next;</span><br><span class="line">    arr.push(3);</span><br><span class="line">&#125;);</span><br><span class="line">stack.push(function *(next)&#123;</span><br><span class="line">    arr.push(2);    </span><br><span class="line">    yield next;</span><br><span class="line">    arr.push(4)</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">co(compose(stack)) (function (err) &#123;</span><br><span class="line">    if (err) throw err;   </span><br><span class="line">    console.log(arr); &#x2F;&#x2F; 输出 [1, 2, 3, 4], 从输出可以看到其执行顺序</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>从上例的程序可以看到<a href="https://github.com/koajs/koa/blob/master/lib/application.js#L113" target="_blank" rel="noopener">koa</a>。koa在加载中间件时是通过co 和 compose来按次序拨开一层一层的middleware。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">co (function *() &#123;</span><br><span class="line">    var arr &#x3D; []</span><br><span class="line">    var funa &#x3D; function *(next) &#123;</span><br><span class="line">        arr.push(1);    </span><br><span class="line">        yield *next;</span><br><span class="line">        arr.push(3);</span><br><span class="line">    &#125;;</span><br><span class="line">    var funb &#x3D; function *(next) &#123;</span><br><span class="line">        arr.push(2);</span><br><span class="line">        yield *next;</span><br><span class="line">        arr.push(4)</span><br><span class="line">    &#125;;</span><br><span class="line">    funa ();</span><br><span class="line">    funb ();</span><br><span class="line">    return arr;</span><br><span class="line">&#125;)(function (err, items) &#123;</span><br><span class="line"> if (err) &#123;</span><br><span class="line">    console.log(err);     </span><br><span class="line"> &#125;</span><br><span class="line"> console.log(items);    </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2020 zs1621 
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://dadoudou.me/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/transition.js"></script>
+    
+        <script src="https://dadoudou.me/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>
