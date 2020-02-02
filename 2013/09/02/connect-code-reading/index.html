@@ -16,7 +16,7 @@
 <meta property="og:description" content="lib -&gt; patch.js headerSent 123res.__defineGetter__(&#39;headerSent&#39;, function()&amp;#123;    return this._header;  &amp;#125;);  这里的this._header是header内容发出后才有的， 内容为header的所有内容， 所以headerSent 只有在res.end(">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2013-09-02T14:12:00.000Z">
-<meta property="article:modified_time" content="2020-01-22T08:32:47.956Z">
+<meta property="article:modified_time" content="2020-02-02T03:35:41.003Z">
 <meta property="article:author" content="zs1621">
 <meta name="twitter:card" content="summary">
     
@@ -58,14 +58,14 @@
     <div id="post-content" class="markdown-body">
         <p><a href="https://github.com/zs1621/connect/blob/master/lib/patch.js" target="_blank" rel="noopener">lib -&gt; patch.js</a></p>
 <p><strong>headerSent</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">res.__defineGetter__(&#39;headerSent&#39;, function()&#123;</span><br><span class="line">    return this._header;</span><br><span class="line">  &#125;);</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plain">res.__defineGetter__(&#39;headerSent&#39;, function()&#123;<br>    return this._header;<br>  &#125;);<br></code></pre></td></tr></table></figure>
 
 <p>这里的this._header是header内容发出后才有的， 内容为header的所有内容， 所以headerSent 只有在res.end()后才有值</p>
 <p><a href="https://github.com/zs1621/connect/blob/master/lib/middleware/compress.js" target="_blank" rel="noopener">lib-&gt;middle-&gt;compress.js</a></p>
 <p><strong>options</strong></p>
 <p>compress中间件用了nodejs 内部模块 <code>zlib</code></p>
 <p>这里的options 参考 <a href="http://nodejs.org/api/zlib.html#zlib_options" target="_blank" rel="noopener">options</a></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">res.on(&#39;header&#39;, function()&#123;</span><br><span class="line"></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plain">res.on(&#39;header&#39;, function()&#123;<br><br>&#125;)<br></code></pre></td></tr></table></figure>
 
 <p>监听到 <code>header</code> 开始</p>
 <ul>
@@ -86,47 +86,47 @@
 <p><strong>3种应用形式</strong></p>
 <ul>
 <li><p>简单输入 username , password </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">connect(connect.basicAuth(&#39;username&#39;, &#39;password&#39;));</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs plain">connect(connect.basicAuth(&#39;username&#39;, &#39;password&#39;));<br></code></pre></td></tr></table></figure>
 </li>
 <li><p>回调</p>
 </li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">connect()</span><br><span class="line">.use(connect.basicAuth(function(user, pass)&#123;</span><br><span class="line">   return &#39;tj&#39; &#x3D;&#x3D; user &amp; &#39;wahoo&#39; &#x3D;&#x3D; pass;</span><br><span class="line">&#125;))</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs plain">connect()<br>.use(connect.basicAuth(function(user, pass)&#123;<br>   return &#39;tj&#39; &#x3D;&#x3D; user &amp; &#39;wahoo&#39; &#x3D;&#x3D; pass;<br>&#125;))<br></code></pre></td></tr></table></figure>
 <ul>
 <li>异步回调</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">connect()</span><br><span class="line">.use(connect.basicAuth(function(user, pass, fn)&#123;</span><br><span class="line">User.authenticate(&#123;user: user, pass: pass&#125;, fn); </span><br><span class="line">&#125;))</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs plain">connect()<br>.use(connect.basicAuth(function(user, pass, fn)&#123;<br>User.authenticate(&#123;user: user, pass: pass&#125;, fn); <br>&#125;))<br></code></pre></td></tr></table></figure>
 
 
 <p><strong>Authrization</strong></p>
 <p>页面需要授权的时候，浏览器会弹出一个登入窗口, 输入正确的帐号， 浏览器会发送一个ＨＴＴＰ请求， 但此时会包含这样的一个 Header:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Authorization: Basic bXl1c2VyOm15cGFzcw&#x3D;&#x3D;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs plain">Authorization: Basic bXl1c2VyOm15cGFzcw&#x3D;&#x3D;<br></code></pre></td></tr></table></figure>
 
 <p>这里的 <code>bXl1c2VyOm15cGFzcw==</code> 是 <code>base64 encoded</code>。例如, <code>base64_decode(&#39;bXl1c2VyOm15cGFzcw==&#39;)</code> -&gt; <code>myuser:mypass</code></p>
 <p>理解头文件的 Authrization, 下面来看代码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">if (&#39;string&#39; &#x3D;&#x3D; typeof callback)  &#x2F;&#x2F;对应第一个应用例子, 见上 </span><br><span class="line">callback &#x3D; function(user, pass) &#123;</span><br><span class="line">	return user &#x3D;&#x3D; username &amp;&amp; pass &#x3D;&#x3D; password; </span><br><span class="line">&#125; &#x2F;&#x2F;这时给callback赋值 function</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs plain">if (&#39;string&#39; &#x3D;&#x3D; typeof callback)  &#x2F;&#x2F;对应第一个应用例子, 见上 <br>callback &#x3D; function(user, pass) &#123;<br>	return user &#x3D;&#x3D; username &amp;&amp; pass &#x3D;&#x3D; password; <br>&#125; &#x2F;&#x2F;这时给callback赋值 function<br></code></pre></td></tr></table></figure>
 
 <p>下面解析出头文件的即 <code>req.headers.authorization</code> 解码出用户输入的用户名和密码得到 <code>user</code> 和 <code>pass</code></p>
 <p>最后调用<code>callback</code>做验证 分一下两种情况</p>
 <ul>
 <li><p>异步callback</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">if (callback.length &gt;&#x3D; 3) &#123;</span><br><span class="line">	var pause &#x3D; utils.pause(req); </span><br><span class="line">	callback(user, pass, function(err, user)&#123;</span><br><span class="line">		if (err || !user) return unauthorized(res, realm);	</span><br><span class="line">		req.user &#x3D; req.remoteUser &#x3D; user;</span><br><span class="line">		next();</span><br><span class="line">		pause.resume(); &#x2F;&#x2F; nodejs version &lt; 0.10, 在中间间使用异步调用时使用， 为了在异步操作完成后， 重新触发消息， 以免事件丢失</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs plain">if (callback.length &gt;&#x3D; 3) &#123;<br>	var pause &#x3D; utils.pause(req); <br>	callback(user, pass, function(err, user)&#123;<br>		if (err || !user) return unauthorized(res, realm);	<br>		req.user &#x3D; req.remoteUser &#x3D; user;<br>		next();<br>		pause.resume(); &#x2F;&#x2F; nodejs version &lt; 0.10, 在中间间使用异步调用时使用， 为了在异步操作完成后， 重新触发消息， 以免事件丢失<br>	&#125;);<br>&#125;<br></code></pre></td></tr></table></figure>
 </li>
 <li><p>同步callback</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">if (callback(user, pass)&#123;</span><br><span class="line">req.user &#x3D; req.remoteUser &#x3D; user; </span><br><span class="line">next();</span><br><span class="line">&#125;else &#123;</span><br><span class="line">unauthorized(res, realm); </span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs plain">if (callback(user, pass)&#123;<br>req.user &#x3D; req.remoteUser &#x3D; user; <br>next();<br>&#125;else &#123;<br>unauthorized(res, realm); <br>&#125;)<br></code></pre></td></tr></table></figure>
 
 </li>
 </ul>
 <p><a href="https://github.com/zs1621/connect/blob/master/lib/middle/static.js" target="_blank" rel="noopener">lib -&gt;middle -&gt;static.js</a></p>
 <p><strong>应用</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">connect()</span><br><span class="line">	.use(connect.static(__dirname+ &#39;&#x2F;public&#39;, &#123;maxAge: 1000&#125;))</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plain">connect()<br>	.use(connect.static(__dirname+ &#39;&#x2F;public&#39;, &#123;maxAge: 1000&#125;))<br></code></pre></td></tr></table></figure>
 
 
 <p><strong>参数</strong></p>
 <p><code>root</code>: </p>
 <p><code>options</code>:<br>    - ‘maxAge’ 浏览器缓存时间  默认为0<br>    - ‘hidden’ 允许隐藏文件的转换 默认false<br>    - ‘redirect’ 如果路径是一个文件夹， 指向 ‘/’ 默认 true<br>    - ‘index’ 默认的文件名‘index.html’</p>
 <p>代码主体就是</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">send(req, path)</span><br><span class="line">	.maxage(options.maxAge || 0)</span><br><span class="line">	.root(root)</span><br><span class="line">	.index(options.index || &#39;index.html&#39;)</span><br><span class="line">	.hidden(options.hidden)</span><br><span class="line">	.on(&#39;error&#39;, error)</span><br><span class="line">	.on(&#39;directory&#39;, directory)</span><br><span class="line">	.pipe(res)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs plain">send(req, path)<br>	.maxage(options.maxAge || 0)<br>	.root(root)<br>	.index(options.index || &#39;index.html&#39;)<br>	.hidden(options.hidden)<br>	.on(&#39;error&#39;, error)<br>	.on(&#39;directory&#39;, directory)<br>	.pipe(res)<br></code></pre></td></tr></table></figure>
 
 <p>对于 <code>send</code> 模块分析见 <a href="zs1621.github.io/blog/2013/09/10/visionmedia-slash-send-reading">send</a></p>
 

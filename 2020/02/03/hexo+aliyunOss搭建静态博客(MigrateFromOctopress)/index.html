@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        hexo |
+        
+        舜子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="需要准备的 域名(如果需要在国内访问需备案) 申请阿里云账号,并开通oss存储(我个人注册花了9元买了一年的oss存储-美西区) 创建 bucket(oss_bucket)  选择 region (oss_region) - 我的域名没有备案选择了美西区 获得阿里云的 access_key 和 access_secrect    安装nodejs, git, hexo   - 参考 (https:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="hexo">
+<meta property="og:url" content="https://dadoudou.me/2020/02/03/hexo+aliyunOss%E6%90%AD%E5%BB%BA%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2(MigrateFromOctopress)/">
+<meta property="og:site_name" content="舜子">
+<meta property="og:description" content="需要准备的 域名(如果需要在国内访问需备案) 申请阿里云账号,并开通oss存储(我个人注册花了9元买了一年的oss存储-美西区) 创建 bucket(oss_bucket)  选择 region (oss_region) - 我的域名没有备案选择了美西区 获得阿里云的 access_key 和 access_secrect    安装nodejs, git, hexo   - 参考 (https:">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dadoudou.me/2020/02/03/hexo+aliyunOss%E6%90%AD%E5%BB%BA%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2(MigrateFromOctopress)/image-20200202182137184.png">
+<meta property="og:image" content="https://dadoudou.me/2020/02/03/hexo+aliyunOss%E6%90%AD%E5%BB%BA%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2(MigrateFromOctopress)/2020/02/03/hexo+aliyunOss%E6%90%AD%E5%BB%BA%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2(MigrateFromOctopress)/image-20200202182137184.png">
+<meta property="article:published_time" content="2020-02-02T23:09:10.000Z">
+<meta property="article:modified_time" content="2020-02-02T23:19:14.058Z">
+<meta property="article:author" content="zs1621">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://dadoudou.me/2020/02/03/hexo+aliyunOss%E6%90%AD%E5%BB%BA%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2(MigrateFromOctopress)/image-20200202182137184.png">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://dadoudou.me/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://dadoudou.me/index.html">Home</a>
+        
+            <a class="false" href="https://dadoudou.me/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://dadoudou.me/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">hexo</h1>
+    <time id="post-date" datetime="2020-02-02T23:09:10.000Z">
+        二月 03, 2020
+    </time>
+    <div id="post-content" class="markdown-body">
+        <h2 id="需要准备的"><a href="#需要准备的" class="headerlink" title="需要准备的"></a>需要准备的</h2><ul>
+<li>域名(如果需要在国内访问需备案)</li>
+<li>申请阿里云账号,并开通oss存储(我个人注册花了9元买了一年的oss存储-美西区)<ul>
+<li>创建 bucket(oss_bucket)  选择 region (oss_region) - 我的域名没有备案选择了美西区</li>
+<li>获得阿里云的 access_key 和 access_secrect </li>
+</ul>
+</li>
+<li>安装nodejs, git, hexo   - 参考 (<a href="https://hexo.io/docs/#Installation" target="_blank" rel="noopener">https://hexo.io/docs/#Installation</a>)</li>
+</ul>
+<h2 id="hexo-init"><a href="#hexo-init" class="headerlink" title="hexo init"></a>hexo init</h2><ul>
+<li><a href="https://hexo.io/docs/setup" target="_blank" rel="noopener">https://hexo.io/docs/setup</a>  按步骤</li>
+</ul>
+<h2 id="blog-文件目录"><a href="#blog-文件目录" class="headerlink" title="blog 文件目录"></a>blog 文件目录</h2><p><img src="./image-20200202182137184.png" alt="image-20200202182137184"></p>
+<img src="2020/02/03/hexo+aliyunOss%E6%90%AD%E5%BB%BA%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2(MigrateFromOctopress)/image-20200202182137184.png" class="" title="This is an example image">
+
+<h2 id="hexo-常用操作-sc"><a href="#hexo-常用操作-sc" class="headerlink" title="hexo 常用操作(sc)"></a>hexo 常用操作(sc)</h2><ul>
+<li>hexo new post  <article name>   文件会出现在 source/_posts/&lt;article_name.md&gt;</li>
+<li>hexo new page <about>    会创建一个文件夹  source/about/index.md </li>
+<li>hexo new draft <draft_name> 会创建一个草稿 source/_draft/&lt;draft_name.md&gt;</li>
+</ul>
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2020 zs1621 
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://dadoudou.me/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://dadoudou.me/js/transition.js"></script>
+    
+        <script src="https://dadoudou.me/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>

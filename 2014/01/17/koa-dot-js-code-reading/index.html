@@ -17,7 +17,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://raw.githubusercontent.com/koajs/koa/master/docs/middleware.gif">
 <meta property="article:published_time" content="2014-01-17T07:23:00.000Z">
-<meta property="article:modified_time" content="2020-01-22T08:32:47.962Z">
+<meta property="article:modified_time" content="2020-02-02T03:35:41.010Z">
 <meta property="article:author" content="zs1621">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/koajs/koa/master/docs/middleware.gif">
@@ -89,7 +89,7 @@
 <li>运行条件: node 版本大于0.11.9</li>
 </ul>
 <p>##<strong>从入口说起</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">var koa &#x3D; require(&#39;koa&#39;);</span><br><span class="line">var app &#x3D; koa();</span><br><span class="line"></span><br><span class="line">app.use(function *()&#123;</span><br><span class="line">    this.body &#x3D; &#39;Hello World&#39;;    </span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(3000);</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs plain">var koa &#x3D; require(&#39;koa&#39;);<br>var app &#x3D; koa();<br><br>app.use(function *()&#123;<br>    this.body &#x3D; &#39;Hello World&#39;;    <br>&#125;);<br><br>app.listen(3000);<br></code></pre></td></tr></table></figure>
 
 
 <p>上面是一个最简单的服务,输出<code>Hello World</code>; 我们用到两个koa的api</p>
@@ -99,7 +99,7 @@
 </ul>
 <p>下面就先从app.listen() 开始</p>
 <p>看 <a href="https://github.com/koajs/koa/blob/master/lib/application.js" target="_blank" rel="noopener">application.js</a> </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">app.listen &#x3D; function () &#123;</span><br><span class="line">    var server &#x3D; http.createServer(this.callback()) ;  </span><br><span class="line">    return server.listen.apply(server, arguments);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs plain">app.listen &#x3D; function () &#123;<br>    var server &#x3D; http.createServer(this.callback()) ;  <br>    return server.listen.apply(server, arguments);<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <blockquote>
 <p>http.createServer([requestListener])<br> returns a new web server object</p>
@@ -109,7 +109,7 @@
 </blockquote>
 <p>由代码可以知道 this.callback() 就是一个 <code>requestListener</code>;</p>
 <p>来到<code>app.callback</code></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">app.callback &#x3D; function () &#123;</span><br><span class="line">    var mw &#x3D; [respond].concat(this.middleware);   &#x2F;&#x2F; 实际上 respond 就是最后一个需要执行的中间件， 负责返回数据的 </span><br><span class="line">    var gen &#x3D; compose(mw); </span><br><span class="line">    var fn &#x3D; co(gen);  &#x2F;&#x2F; co 和 compose 就是将一个个middle，按序执行的操作, 此时middle还没有运行</span><br><span class="line">    var self &#x3D; this;</span><br><span class="line">    </span><br><span class="line">    if (!this.listeners(&#39;error&#39;).length) this.on(&#39;error&#39;, this.onerror);</span><br><span class="line">    </span><br><span class="line">    return function (req, res) &#123;</span><br><span class="line">        res.statusCode &#x3D; 404;    </span><br><span class="line">        var ctx &#x3D; self.createContext(req, res);</span><br><span class="line">        finished(ctx, ctx.onerror);</span><br><span class="line">        fn.call(ctx, ctx.onerror); &#x2F;&#x2F; 这步运行了说明服务器接收到了请求， 然后一步步的运行middle 和 请求业务处理</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs plain">app.callback &#x3D; function () &#123;<br>    var mw &#x3D; [respond].concat(this.middleware);   &#x2F;&#x2F; 实际上 respond 就是最后一个需要执行的中间件， 负责返回数据的 <br>    var gen &#x3D; compose(mw); <br>    var fn &#x3D; co(gen);  &#x2F;&#x2F; co 和 compose 就是将一个个middle，按序执行的操作, 此时middle还没有运行<br>    var self &#x3D; this;<br>    <br>    if (!this.listeners(&#39;error&#39;).length) this.on(&#39;error&#39;, this.onerror);<br>    <br>    return function (req, res) &#123;<br>        res.statusCode &#x3D; 404;    <br>        var ctx &#x3D; self.createContext(req, res);<br>        finished(ctx, ctx.onerror);<br>        fn.call(ctx, ctx.onerror); &#x2F;&#x2F; 这步运行了说明服务器接收到了请求， 然后一步步的运行middle 和 请求业务处理<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
 
 <p>上面的代码基本上就解释了整个请求到回复的流程</p>
