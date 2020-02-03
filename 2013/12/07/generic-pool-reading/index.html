@@ -110,19 +110,83 @@
 </li>
 </ol>
 <p><a name="dispense" id="despense"><strong>dispense</strong></a></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">dispense</span>(<span class="hljs-params"></span>) </span>&#123;<br>    <span class="hljs-keyword">var</span> obj = <span class="hljs-literal">null</span>, <br>    objWithTimeout = <span class="hljs-literal">null</span>,<br>    err = <span class="hljs-literal">null</span>,<br>    clientCb = <span class="hljs-literal">null</span>,<br>    waitingCount = waitingClients.size();<br>    log(<span class="hljs-string">"..."</span>);<br>    <span class="hljs-keyword">if</span> (waitingCount &gt; <span class="hljs-number">0</span>) &#123; <span class="hljs-comment">//此时waitingCount = 1</span><br>        <span class="hljs-keyword">while</span>(availableObjects.length &gt; <span class="hljs-number">0</span>) &#123;<br>            log(<span class="hljs-string">"..."</span>);    <br>            objWithTimeout = avaiableObjects[<span class="hljs-number">0</span>];<br>            <span class="hljs-keyword">if</span> (!factory.validate(objWithTimeout.obj)) &#123;<br>                me.destroy(objWithTimeout.obj);     <br>                <span class="hljs-keyword">continue</span>;<br>            &#125; <span class="hljs-comment">// 这一步验证对象</span><br>            avaiableObjects.shift(); <span class="hljs-comment">// LIFO</span><br>            clientCb = waitingClients.dequeue(); <span class="hljs-comment">// dequeue</span><br>            <span class="hljs-keyword">return</span> clientCb(err, objWithTimeout.obj); <span class="hljs-comment">// callback</span><br>        &#125;     <br>        <span class="hljs-keyword">if</span> (count &lt; factory.max) &#123;<br>                createResource();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
-
+<pre><code class="javascript">    function dispense() {
+        var obj = null, 
+        objWithTimeout = null,
+        err = null,
+        clientCb = null,
+        waitingCount = waitingClients.size();
+        log(&quot;...&quot;);
+        if (waitingCount &gt; 0) { //此时waitingCount = 1
+            while(availableObjects.length &gt; 0) {
+                log(&quot;...&quot;);    
+                objWithTimeout = avaiableObjects[0];
+                if (!factory.validate(objWithTimeout.obj)) {
+                    me.destroy(objWithTimeout.obj);     
+                    continue;
+                } // 这一步验证对象
+                avaiableObjects.shift(); // LIFO
+                clientCb = waitingClients.dequeue(); // dequeue
+                return clientCb(err, objWithTimeout.obj); // callback
+            }     
+            if (count &lt; factory.max) {
+                    createResource();
+            }
+        }
+    }</code></pre>
 <p><a name="release" id="release"><strong>release</strong></a></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs javascript">me.release = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">obj</span>) </span>&#123;<br>    <span class="hljs-comment">// 确保对象已经被释放</span><br>    <span class="hljs-keyword">if</span> (availableObjects.some(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">objWithTimeout</span>) </span>&#123;<br>        <span class="hljs-keyword">return</span> (objWithTimeout.obj === obj); <br>        &#125;)) &#123;<br>        log(<span class="hljs-string">"release called twice for the same resource"</span>)<br>        <span class="hljs-keyword">return</span>;<br>    &#125;     <br>    <span class="hljs-keyword">var</span> objWithTimeout = &#123; <span class="hljs-attr">obj</span>: obj, <span class="hljs-attr">timeout</span>: (<span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().getTime() + idleTimeoutMillis) &#125;;<br>    availableObjects.push(objWithTimeout); <span class="hljs-comment">// 此时 availableObjects.size()=1</span><br>    log(<span class="hljs-string">"timeout:.."</span>);<br>    dispense();  <br>    scheduleRemoveIdle(); <span class="hljs-comment">// 计划移走idle items(空闲项目) 延迟1000ms 执行 removeIdle</span><br>&#125;<br></code></pre></td></tr></table></figure>
-
-
+<pre><code class="javascript">me.release = function(obj) {
+    // 确保对象已经被释放
+    if (availableObjects.some(function(objWithTimeout) {
+        return (objWithTimeout.obj === obj); 
+        })) {
+        log(&quot;release called twice for the same resource&quot;)
+        return;
+    }     
+    var objWithTimeout = { obj: obj, timeout: (new Date().getTime() + idleTimeoutMillis) };
+    availableObjects.push(objWithTimeout); // 此时 availableObjects.size()=1
+    log(&quot;timeout:..&quot;);
+    dispense();  
+    scheduleRemoveIdle(); // 计划移走idle items(空闲项目) 延迟1000ms 执行 removeIdle
+}</code></pre>
 <p><a name="removeIdle" id="removeIdle"><strong>removeIdle</strong></a></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">removeIdle</span>(<span class="hljs-params"></span>)</span>&#123;<br>   <span class="hljs-keyword">var</span> toRemove = [],<br>       now = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().getTime(),<br>       i,<br>       al, tr,<br>       timeout;<br>   removeIdleScheduled = <span class="hljs-literal">false</span>;<br>   <span class="hljs-comment">// go through the available(idle) items, check if they have timed out;</span><br>   <span class="hljs-keyword">for</span> (i=<span class="hljs-number">0</span>, al=availableObjects.length; i&lt; al &amp;&amp;<br>       (refreshIdle) || (count - factory.min &gt; toRemove.length));i+=<span class="hljs-number">1</span><br>       )&#123;<br>       timeout = availableObjects[i].timeout; <br>       <span class="hljs-keyword">if</span> (now &gt;= timeout) &#123;<br>          <span class="hljs-comment">//client timed out, so destroy it </span><br>          toRemove.push(availableObjects[i].obj);<br>           &#125;<br>       &#125;<br>       <span class="hljs-keyword">for</span> (i=<span class="hljs-number">0</span>, tr=toRemove.length; i&lt;tr; i+=<span class="hljs-number">1</span>) &#123;<br>           me.destroy(toRemove[i]);     <br>       &#125;<br>       al = availableObjects.length;<br>       <span class="hljs-keyword">if</span> (al &gt; <span class="hljs-number">0</span>) &#123;<br>          log(<span class="hljs-string">".."</span>); <br>          scheduleRemoveIdle();<br>       &#125; <span class="hljs-keyword">else</span> &#123;<br>           log(<span class="hljs-string">"removeIdle() all objects removed"</span>, <span class="hljs-string">'verbose'</span>);     <br>       &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
-
+<pre><code class="javascript"> function removeIdle(){
+    var toRemove = [],
+        now = new Date().getTime(),
+        i,
+        al, tr,
+        timeout;
+    removeIdleScheduled = false;
+    // go through the available(idle) items, check if they have timed out;
+    for (i=0, al=availableObjects.length; i&lt; al &amp;&amp;
+        (refreshIdle) || (count - factory.min &gt; toRemove.length));i+=1
+        ){
+        timeout = availableObjects[i].timeout; 
+        if (now &gt;= timeout) {
+           //client timed out, so destroy it 
+           toRemove.push(availableObjects[i].obj);
+            }
+        }
+        for (i=0, tr=toRemove.length; i&lt;tr; i+=1) {
+            me.destroy(toRemove[i]);     
+        }
+        al = availableObjects.length;
+        if (al &gt; 0) {
+           log(&quot;..&quot;); 
+           scheduleRemoveIdle();
+        } else {
+            log(&quot;removeIdle() all objects removed&quot;, &#39;verbose&#39;);     
+        }
+     }</code></pre>
 <p><a name="destroy" id="destroy"><strong>destroy</strong></a></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs javascript">me.destroy = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">obj</span>) </span>&#123;<br>   count -= <span class="hljs-number">1</span>; <br>   availableOjbects = availableObjects.filter(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">objWithTimeout</span>) </span>&#123;<br>      <span class="hljs-keyword">return</span> (objWithTimeout.obj != obj) <br>       &#125;);<span class="hljs-comment">//过滤掉return true 的对象</span><br>   factory.destroy(obj);<br>   ensureMinimum();<br>    &#125;<br></code></pre></td></tr></table></figure>
-
-
+<pre><code class="javascript"> me.destroy = function(obj) {
+    count -= 1; 
+    availableOjbects = availableObjects.filter(function(objWithTimeout) {
+       return (objWithTimeout.obj != obj) 
+        });//过滤掉return true 的对象
+    factory.destroy(obj);
+    ensureMinimum();
+     }</code></pre>
 
     </div>
 </article>

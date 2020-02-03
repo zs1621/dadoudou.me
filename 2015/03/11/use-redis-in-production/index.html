@@ -70,9 +70,13 @@
 <li>最近的项目里需要对redis数据库做迁移,从系统盘-&gt;数据盘,场景是只使用了RDB持久化</li>
 <li>使用config set dir 需注意</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs plain">rdb将内存中的数据库以RDB格式保存到磁盘中，如果RDB文件已存在，那么新的RDB文件写好将会替换为已有的RDB文件。<br>在保存RDB文件期间，主进程会被调用rdbsave函数 <br>bgsave过程fork出一个子进程，子进程负责调用rdbSave,并在保存完成之后向主进程发送信号，通知保存已完成<br>save过程直接调用rdbSave,阻塞Redis主进程，知道保存完为止。在主进程阻塞期间，服务器不能处理客户端的任何请求。<br>这里有两个坑<br>1. fork是有延迟的 [](http:&#x2F;&#x2F;blog.nosqlfan.com&#x2F;html&#x2F;3903.html)<br>2. RDB在写入过程中，会连内存一起Fork出一个新进程，遍历新进程内存中的数据写RDB. 注意fork的时候一定要注意当前机子的内存，保险的话是2倍现有redis所占内存.<br></code></pre></td></tr></table></figure>
-
-<ul>
+<pre><code>rdb将内存中的数据库以RDB格式保存到磁盘中，如果RDB文件已存在，那么新的RDB文件写好将会替换为已有的RDB文件。
+在保存RDB文件期间，主进程会被调用rdbsave函数 
+bgsave过程fork出一个子进程，子进程负责调用rdbSave,并在保存完成之后向主进程发送信号，通知保存已完成
+save过程直接调用rdbSave,阻塞Redis主进程，知道保存完为止。在主进程阻塞期间，服务器不能处理客户端的任何请求。
+这里有两个坑
+1. fork是有延迟的 [](http://blog.nosqlfan.com/html/3903.html)
+2. RDB在写入过程中，会连内存一起Fork出一个新进程，遍历新进程内存中的数据写RDB. 注意fork的时候一定要注意当前机子的内存，保险的话是2倍现有redis所占内存.</code></pre><ul>
 <li>dump.rdb 从 /var/lib/redis/ ， 转存到/mnt/lib/redis/</li>
 <li>redis-cli</li>
 <li>config set dir /mnt/lib/redis #这里要注意redis进程是属于哪个用户的, 要把/mnt/lib/redis设为此用户可写可读的</li>

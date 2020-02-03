@@ -8,12 +8,12 @@
         
         舜子</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="##* finished   功能: 在请求关闭，完成， 或者出错时执行回调 用例: 清除传输流。例如为了防止文件描述符泄漏，在socket出错时， 你会想要将文件流摧毁  ##从一个koa例子开始 1234567var onFinished &#x3D; require(&#39;finished&#39;);function* () &amp;#123;    var stream &#x3D; th">
+    <meta name="description" content="##* finished   功能: 在请求关闭，完成， 或者出错时执行回调 用例: 清除传输流。例如为了防止文件描述符泄漏，在socket出错时， 你会想要将文件流摧毁  ##从一个koa例子开始 var onFinished &#x3D; require(&#39;finished&#39;); function* () {     var stream &#x3D; this.body &#x3D; fs.createR">
 <meta property="og:type" content="article">
 <meta property="og:title" content="expressjs&#x2F;finished Code Reading">
 <meta property="og:url" content="https://dadoudou.me/2014/07/14/expressjs-slash-finished-code-reading/">
 <meta property="og:site_name" content="舜子">
-<meta property="og:description" content="##* finished   功能: 在请求关闭，完成， 或者出错时执行回调 用例: 清除传输流。例如为了防止文件描述符泄漏，在socket出错时， 你会想要将文件流摧毁  ##从一个koa例子开始 1234567var onFinished &#x3D; require(&#39;finished&#39;);function* () &amp;#123;    var stream &#x3D; th">
+<meta property="og:description" content="##* finished   功能: 在请求关闭，完成， 或者出错时执行回调 用例: 清除传输流。例如为了防止文件描述符泄漏，在socket出错时， 你会想要将文件流摧毁  ##从一个koa例子开始 var onFinished &#x3D; require(&#39;finished&#39;); function* () {     var stream &#x3D; this.body &#x3D; fs.createR">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2014-07-14T03:57:26.000Z">
 <meta property="article:modified_time" content="2020-02-02T03:35:41.012Z">
@@ -62,22 +62,72 @@
 <li>用例: 清除传输流。例如为了防止文件描述符泄漏，在socket出错时， 你会想要将文件流摧毁</li>
 </ul>
 <p>##<strong>从一个koa例子开始</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs plain">var onFinished &#x3D; require(&#39;finished&#39;);<br>function* () &#123;<br>    var stream &#x3D; this.body &#x3D; fs.createReadStream(&#39;thingie.json&#39;);   <br>    onFinished(this, function(err) &#123;<br>        stream.destroy();    <br>    &#125;)<br>&#125;<br></code></pre></td></tr></table></figure>
+<pre><code>var onFinished = require(&#39;finished&#39;);
+function* () {
+    var stream = this.body = fs.createReadStream(&#39;thingie.json&#39;);   
+    onFinished(this, function(err) {
+        stream.destroy();    
+    })
+}</code></pre><p>再看finished的代码</p>
+<pre><code>module.exports = function finished (thingie, callback) {
+    /*
+     * 主要需要監測socket和res的事件 
+     */
+    var socket = thingie.socket || thingie;    
+    var res = thingie.res || thingie; 
 
+    /*
+     * res完成或者socket不可寫的時候， 直接執行callback, 返回thingie
+     */
+    if ( res.finished || !socket.writable) {
+        defer(callback);    
+        return thingie;
+    };  
 
+    /*
+     * 第一次運行時listener 和 res.__onFinished 是不存在的
+     */
+    var listener = res.__onFinished;
 
-<p>再看finished的代码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs plain">module.exports &#x3D; function finished (thingie, callback) &#123;<br>    &#x2F;*<br>     * 主要需要監測socket和res的事件 <br>     *&#x2F;<br>    var socket &#x3D; thingie.socket || thingie;    <br>    var res &#x3D; thingie.res || thingie; <br><br>    &#x2F;*<br>     * res完成或者socket不可寫的時候， 直接執行callback, 返回thingie<br>     *&#x2F;<br>    if ( res.finished || !socket.writable) &#123;<br>        defer(callback);    <br>        return thingie;<br>    &#125;;  <br><br>    &#x2F;*<br>     * 第一次運行時listener 和 res.__onFinished 是不存在的<br>     *&#x2F;<br>    var listener &#x3D; res.__onFinished;<br><br>    if (!listener || !listener.queue) &#123;<br>        listener &#x3D; res.__onFinished &#x3D; function onFinished(err)  &#123;<br>            if (res.__onFinished &#x3D;&#x3D;&#x3D; listener) res.__onFinished &#x3D; null; &#x2F;&#x2F; 這句表明每次給listener 賦完值， res.__onFinished &#x3D; null;<br>            var queue &#x3D; listener.queue || [];<br>            while (queue.length) queue.shift()(err)<br>        &#125;   <br>        listerner.queue &#x3D; [];<br><br>        first([<br>            [socket, &#39;error&#39;, &#39;close&#39;], <br>            [res, &#39;finish&#39;],<br>        ], listener); &#x2F;&#x2F; 看[first](https:&#x2F;&#x2F;github.com&#x2F;jonathanong&#x2F;ee-first)模块解析: 主要功能在监听到指定的事件的第一件时，触发响应回调， 并清除移除所有的监听。<br>    &#125;<br><br>    listener.queue.push(callback);<br><br>    return thingie;<br>&#125;<br></code></pre></td></tr></table></figure>
+    if (!listener || !listener.queue) {
+        listener = res.__onFinished = function onFinished(err)  {
+            if (res.__onFinished === listener) res.__onFinished = null; // 這句表明每次給listener 賦完值， res.__onFinished = null;
+            var queue = listener.queue || [];
+            while (queue.length) queue.shift()(err)
+        }   
+        listerner.queue = [];
 
+        first([
+            [socket, &#39;error&#39;, &#39;close&#39;], 
+            [res, &#39;finish&#39;],
+        ], listener); // 看[first](https://github.com/jonathanong/ee-first)模块解析: 主要功能在监听到指定的事件的第一件时，触发响应回调， 并清除移除所有的监听。
+    }
 
-<p>##<em>想要具体看finish的应用场景，其实在<a href="https://github.com/expressjs/finished/blob/master/test/test.js" target="_blank" rel="noopener">单元测试</a>里有很多具体的例子</em></p>
+    listener.queue.push(callback);
+
+    return thingie;
+}</code></pre><p>##<em>想要具体看finish的应用场景，其实在<a href="https://github.com/expressjs/finished/blob/master/test/test.js" target="_blank" rel="noopener">单元测试</a>里有很多具体的例子</em></p>
 <ul>
 <li>下面具体理解下其中的一个单元测试</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs plain">describe(&#39;when the request finished&#39;, function () &#123;<br>   it(&#39;should execute the callback when called after finish&#39;, function(done)&#123;<br>       var server &#x3D; http.createServer(function(req, res)&#123;<br>           onFinished(res, function()&#123;<br>               &#x2F;&#x2F;第4步<br>               onFinished(res, done); &#x2F;&#x2F; 第5步   <br>           &#125;) &#x2F;&#x2F; 第2步   <br>           setTimeout(res.end.bind(res), 0); &#x2F;&#x2F; 第3步<br>       &#125;)  &#x2F;&#x2F; 第 0 步  <br>       server.listen(function()&#123;<br>           var port &#x3D; this.address().port;    <br>           http.get(&#39;http:&#x2F;&#x2F;127.0.0.1:&#39; + port, function()&#123;<br>               res.resume();<br>               res.on(&#39;close&#39;, server.close.bind(server));<br>           &#125;) &#x2F;&#x2F;第1步<br>       &#125;)<br>   &#125;)    <br>&#125;)<br></code></pre></td></tr></table></figure>
-
-
-<ul>
+<pre><code> describe(&#39;when the request finished&#39;, function () {
+    it(&#39;should execute the callback when called after finish&#39;, function(done){
+        var server = http.createServer(function(req, res){
+            onFinished(res, function(){
+                //第4步
+                onFinished(res, done); // 第5步   
+            }) // 第2步   
+            setTimeout(res.end.bind(res), 0); // 第3步
+        })  // 第 0 步  
+        server.listen(function(){
+            var port = this.address().port;    
+            http.get(&#39;http://127.0.0.1:&#39; + port, function(){
+                res.resume();
+                res.on(&#39;close&#39;, server.close.bind(server));
+            }) //第1步
+        })
+    })    
+ })</code></pre><ul>
 <li><strong>测试步骤</strong><ul>
 <li>先创建服务器 第0步</li>
 <li>监听端口,做出请求 第一步</li>

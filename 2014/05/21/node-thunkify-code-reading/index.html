@@ -8,12 +8,12 @@
         
         舜子</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="##thunkify ##code 12345678910111213141516171819202122function thunkify(fn) &amp;#123;    assert(&#39;function&#39; &#x3D;&#x3D; typeof fn, &#39;function required&#39;);        return function () &amp;#123;">
+    <meta name="description" content="##thunkify ##code function thunkify(fn) {     assert(&#39;function&#39; &#x3D;&#x3D; typeof fn, &#39;function required&#39;);          return function () {         var args &#x3D; slice.call(arguments);">
 <meta property="og:type" content="article">
 <meta property="og:title" content="node-thunkify Code Reading">
 <meta property="og:url" content="https://dadoudou.me/2014/05/21/node-thunkify-code-reading/">
 <meta property="og:site_name" content="舜子">
-<meta property="og:description" content="##thunkify ##code 12345678910111213141516171819202122function thunkify(fn) &amp;#123;    assert(&#39;function&#39; &#x3D;&#x3D; typeof fn, &#39;function required&#39;);        return function () &amp;#123;">
+<meta property="og:description" content="##thunkify ##code function thunkify(fn) {     assert(&#39;function&#39; &#x3D;&#x3D; typeof fn, &#39;function required&#39;);          return function () {         var args &#x3D; slice.call(arguments);">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2014-05-21T04:02:00.000Z">
 <meta property="article:modified_time" content="2020-02-02T03:35:41.011Z">
@@ -58,13 +58,36 @@
     <div id="post-content" class="markdown-body">
         <p>##<a href="https://github.com/visionmedia/node-thunkify" target="_blank" rel="noopener">thunkify</a></p>
 <p>##code</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs plain">function thunkify(fn) &#123;<br>    assert(&#39;function&#39; &#x3D;&#x3D; typeof fn, &#39;function required&#39;);    <br><br>    return function () &#123;<br>        var args &#x3D; slice.call(arguments);    <br>        var ctx &#x3D; this;<br>        return function (done) &#123;   &#x2F;&#x2F; done 是回调函数<br>            var called;<br>            args.push(function() &#123;<br>                if (called) return;<br>                called &#x3D; true;    <br>                done.apply(null, arguments); <br>            &#125;); &#x2F;&#x2F; 将回调处理加入参数列表<br><br>            try &#123;<br>                fn.apply(ctx, args);   &#x2F;&#x2F; 函数处理 <br>            &#125; catch (err) &#123;<br>                done(err);   &#x2F;&#x2F; 异常获取并用回调处理 <br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<pre><code>function thunkify(fn) {
+    assert(&#39;function&#39; == typeof fn, &#39;function required&#39;);    
+
+    return function () {
+        var args = slice.call(arguments);    
+        var ctx = this;
+        return function (done) {   // done 是回调函数
+            var called;
+            args.push(function() {
+                if (called) return;
+                called = true;    
+                done.apply(null, arguments); 
+            }); // 将回调处理加入参数列表
+
+            try {
+                fn.apply(ctx, args);   // 函数处理 
+            } catch (err) {
+                done(err);   // 异常获取并用回调处理 
+            }
+        }
+    }
+};</code></pre><p>##例子</p>
+<pre><code>var thunkify = require(&#39;thunkify&#39;);
+var fs = require(&#39;fs&#39;);
 
 
-<p>##例子</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs plain">var thunkify &#x3D; require(&#39;thunkify&#39;);<br>var fs &#x3D; require(&#39;fs&#39;);<br><br><br>var read &#x3D; thunkify(fs.readFile);<br><br>read(&#39;package.json&#39;, &#39;utf8&#39;)(function(err, str)&#123;<br>&#125;);<br></code></pre></td></tr></table></figure>
+var read = thunkify(fs.readFile);
 
-
+read(&#39;package.json&#39;, &#39;utf8&#39;)(function(err, str){
+});</code></pre>
     </div>
 </article>
 

@@ -8,12 +8,12 @@
         
         舜子</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="##TCPserver 一个非阻塞， 单进程的 TCP 服务器 为了使用 TCPServer, 定义一个子类改写其中的 handle_stream 方法 如果让服务器通过 SSL 传输， 如下例 1234TCPServer(ssl_options&#x3D;&amp;#123;	&quot;certfile&quot;: os.path.join(data_dir, &quot;mydomain.crt&amp;">
+    <meta name="description" content="##TCPserver 一个非阻塞， 单进程的 TCP 服务器 为了使用 TCPServer, 定义一个子类改写其中的 handle_stream 方法 如果让服务器通过 SSL 传输， 如下例 TCPServer(ssl_options&#x3D;{     &quot;certfile&quot;: os.path.join(data_dir, &quot;mydomain.crt&quot;),">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Tornado Code Reading-TCPServer">
 <meta property="og:url" content="https://dadoudou.me/2013/09/16/tornado-code-reading-tcpserver/">
 <meta property="og:site_name" content="舜子">
-<meta property="og:description" content="##TCPserver 一个非阻塞， 单进程的 TCP 服务器 为了使用 TCPServer, 定义一个子类改写其中的 handle_stream 方法 如果让服务器通过 SSL 传输， 如下例 1234TCPServer(ssl_options&#x3D;&amp;#123;	&quot;certfile&quot;: os.path.join(data_dir, &quot;mydomain.crt&amp;">
+<meta property="og:description" content="##TCPserver 一个非阻塞， 单进程的 TCP 服务器 为了使用 TCPServer, 定义一个子类改写其中的 handle_stream 方法 如果让服务器通过 SSL 传输， 如下例 TCPServer(ssl_options&#x3D;{     &quot;certfile&quot;: os.path.join(data_dir, &quot;mydomain.crt&quot;),">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2013-09-16T08:31:00.000Z">
 <meta property="article:modified_time" content="2020-02-02T03:35:41.006Z">
@@ -60,48 +60,65 @@
 <p>一个非阻塞， 单进程的 <code>TCP</code> 服务器</p>
 <p>为了使用 <code>TCPServer</code>, 定义一个子类改写其中的 <code>handle_stream</code> 方法</p>
 <p>如果让服务器通过 <code>SSL</code> 传输， 如下例</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs plain">TCPServer(ssl_options&#x3D;&#123;<br>	&quot;certfile&quot;: os.path.join(data_dir, &quot;mydomain.crt&quot;),<br>	&quot;keyfile&quot;: os.path.join(data_dir, &quot;mydomain.key&quot;),<br>&#125;)<br></code></pre></td></tr></table></figure>
-
-<p><code>TCPServer</code> simple single-process::</p>
+<pre><code>TCPServer(ssl_options={
+    &quot;certfile&quot;: os.path.join(data_dir, &quot;mydomain.crt&quot;),
+    &quot;keyfile&quot;: os.path.join(data_dir, &quot;mydomain.key&quot;),
+})</code></pre><p><code>TCPServer</code> simple single-process::</p>
 <ul>
 <li><code>listen</code>: 监听单个进程</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plain">server &#x3D; TCPServer()<br>server.listen(8888)<br>IOLoop.instance().start()<br></code></pre></td></tr></table></figure>
-
-<ul>
+<pre><code>server = TCPServer()
+server.listen(8888)
+IOLoop.instance().start()</code></pre><ul>
 <li><code>bind</code> / <code>start</code>: simple multi-process::</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs plain">server &#x3D; TCPServer()<br>server.bind(8888)<br>server.start(0) #Forks multiple sub-process<br>IOLoop.instance().start()<br></code></pre></td></tr></table></figure>
-
-<p>如果使用<code>start</code>接口， 一个 <code>.IOLoop</code> 不可以传入 <code>TCPServer</code> 结构里。 <code>start</code>将总是开始服务在默认的单例 <code>.IOLoop</code></p>
+<pre><code>server = TCPServer()
+server.bind(8888)
+server.start(0) #Forks multiple sub-process
+IOLoop.instance().start()</code></pre><p>如果使用<code>start</code>接口， 一个 <code>.IOLoop</code> 不可以传入 <code>TCPServer</code> 结构里。 <code>start</code>将总是开始服务在默认的单例 <code>.IOLoop</code></p>
 <ul>
 <li><code>add_sockets</code>: 高级多进程::</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs plain">sockets &#x3D; bind_sockets(8888)<br>tornaado.process.fork_processes(0)<br>server &#x3D; TCPServer()<br>server.add_sockets(sockets)<br>IOLoop.instance().start()<br></code></pre></td></tr></table></figure>
-
-<p><code>add_sockets</code> 接口更为复杂， 但是和<code>tornado.process.fork_processes</code>使用将会更明了， <code>add_sockets</code>也可以用在单进程服务中 ， 如果你想要创建你的监听套节字而不是<code>~tornado.netutil.bind_sockets</code></p>
+<pre><code>sockets = bind_sockets(8888)
+tornaado.process.fork_processes(0)
+server = TCPServer()
+server.add_sockets(sockets)
+IOLoop.instance().start()</code></pre><p><code>add_sockets</code> 接口更为复杂， 但是和<code>tornado.process.fork_processes</code>使用将会更明了， <code>add_sockets</code>也可以用在单进程服务中 ， 如果你想要创建你的监听套节字而不是<code>~tornado.netutil.bind_sockets</code></p>
 <hr>
 <p>以上是怎么应用<br>下面看源码</p>
 <p><strong>初始化</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs plain">def __init__(self, io_loop&#x3D;None, ssl_options&#x3D;None, max_buffer_size&#x3D;None):<br>	self.io_loop &#x3D; io_loop<br>	self.ssl_options &#x3D; ssl_options<br>	self.sockets &#x3D; &#123;&#125;<br>	self._pending_sockets &#x3D; []<br>	self._started &#x3D; False<br>	self.max_buffer_size &#x3D; max_buffer_size<br>	#下面是检验 SSL 文件，此处略<br></code></pre></td></tr></table></figure>
-
-
-<p><strong>listen</strong></p>
+<pre><code>def __init__(self, io_loop=None, ssl_options=None, max_buffer_size=None):
+    self.io_loop = io_loop
+    self.ssl_options = ssl_options
+    self.sockets = {}
+    self._pending_sockets = []
+    self._started = False
+    self.max_buffer_size = max_buffer_size
+    #下面是检验 SSL 文件，此处略</code></pre><p><strong>listen</strong></p>
 <p>在给定的端口接受连接<br>这个方法可能被调用多次为了监听多个端口。<code>listen</code> 立即生效; 之后不必调用<code>TCPServer.start</code> , 但是， <code>,IOLoop</code> 是必要的</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plain">sockets &#x3D; bind_sockets(port, address&#x3D;address)<br>self.add_sockets(sockets)<br></code></pre></td></tr></table></figure>
-
-<p>源码里的 <code>bind_sockets</code> 见 <a href="#bind_sockets">bind_sockets</a>, <code>add_sockets</code> 见下</p>
+<pre><code>sockets = bind_sockets(port, address=address)
+self.add_sockets(sockets)</code></pre><p>源码里的 <code>bind_sockets</code> 见 <a href="#bind_sockets">bind_sockets</a>, <code>add_sockets</code> 见下</p>
 <p><strong>add_sockets</strong></p>
 <p>让服务接受多个连接</p>
 <p><code>sockets</code> 参数是一个socket数组, <code>add_sockets</code>一般和 <code>tornado.process.fork_processes</code>联合使用 为了控制 多进程服务的启动</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs plain">if self.io_loop is None:<br>	self.io_loop &#x3D; IOLoop.current()<br><br>for sock in sockets:<br>	self._sockets[sock.fileno()] &#x3D; sock<br>	add_accept_handler(sock, self._handle_connection, io_loop&#x3D;self.io.loop)<br></code></pre></td></tr></table></figure>
+<pre><code>if self.io_loop is None:
+    self.io_loop = IOLoop.current()
 
-<p>上面的 add_accept_handler 见 <a href="#add_accept_handler">add_accept_handler</a><br>add_accept_handler 第二个参数 self._handle_connection是个回调函数, 分析如下</p>
+for sock in sockets:
+    self._sockets[sock.fileno()] = sock
+    add_accept_handler(sock, self._handle_connection, io_loop=self.io.loop) </code></pre><p>上面的 add_accept_handler 见 <a href="#add_accept_handler">add_accept_handler</a><br>add_accept_handler 第二个参数 self._handle_connection是个回调函数, 分析如下</p>
 <blockquote>
 <p>_handle_connection在接受客户端的连接处理结束后会被调用，调用时传入连接和ioloop对象初始化 IOStream,用于对客户端的异步读写;然后调用 <code>handle_stream</code>(注意这里的handle_stream 文档说了如果你只是用<code>tcpserver</code>那么，handle_stream得自己重写, 如果用tornado的httpserver 那handle_stream 在 <a href="https://github.com/facebook/tornado/blob/master/tornado/httpserver.py" target="_blank" rel="noopener">httpserver</a>), 传入创建的<code>IOStream</code>对象初始化一个<code>HTTPConnection</code>, <code>HTTPConnection</code>  封装了<code>IOStream</code> 的一些操作， 用于处俩 <code>HTTPRequest</code> 并返回。 至此 <code>HTTPServer</code>的创建、启动、注册回调函数过程结束</p>
 </blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#如果self.ssl_options不为空，处理ssl代码略</span><br><span class="hljs-keyword">try</span>:<br>	<span class="hljs-keyword">if</span> self.ssl_options <span class="hljs-keyword">in</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>		stream = SSLTOSTREAM(connection, io_loop=self.io_loop, max_buffer_size=self.max_buffer_size)<br>	<span class="hljs-keyword">else</span>:<br>		stream = IOSTream(connection, io_loop=self.io_loop, max_buffer_size=self.max_buffer_size)<br>	self.handle_stream(stream, address)<br><span class="hljs-keyword">except</span> Excetpion:<br>	app_log.error(<span class="hljs-string">'Error in connection callback'</span>, exc_info=<span class="hljs-literal">True</span>)<br></code></pre></td></tr></table></figure>
-
+<pre><code class="python">#如果self.ssl_options不为空，处理ssl代码略
+try:
+    if self.ssl_options in not None:
+        stream = SSLTOSTREAM(connection, io_loop=self.io_loop, max_buffer_size=self.max_buffer_size)
+    else:
+        stream = IOSTream(connection, io_loop=self.io_loop, max_buffer_size=self.max_buffer_size)
+    self.handle_stream(stream, address)
+except Excetpion:
+    app_log.error(&#39;Error in connection callback&#39;, exc_info=True)</code></pre>
 <p>从上面的分析和源码 可知 服务器的工作流程 socket-&gt;bind-&gt;listen创建 listen socket 监听客户端， 并将每个listen socket 的 fd 注册到IOLoop的单例实例中; 当 listen socket 可读时回调 _handle_events 处理客户端请求；在与客户端通信的过程中使用 IOStream 封装读写缓冲区， 实现与客户端的异步读写。 下面我们将具体了解listen socket 的 fd 被注册到IOLoop的单例实例中  见 <a href="http://zs1621.github.io/blog/2013/09/19/tornado-code-reading-ioloop/" target="_blank" rel="noopener">IOLoop</a></p>
 <hr>
 <p>##<a href="https://github.com/facebook/tornado/blob/master/tornado/netutil.py" target="_blank" rel="noopener">netutil</a></p>
@@ -120,14 +137,63 @@
 <li><p>代码</p>
 </li>
 </ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs python">sockets = []<br><span class="hljs-keyword">if</span> address == <span class="hljs-string">""</span>:<br>	address = <span class="hljs-literal">None</span><br><span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> socket.has_ipv6 <span class="hljs-keyword">and</span> family == socket.AF_UNSPEC:<br>	family = socket.AF_INET<br><span class="hljs-keyword">if</span> flags <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>	flags = socket.AI_PASSIVE<br>	<span class="hljs-comment">#见 [getaddrinfo](https://github.com/zs1621/pythostudy/wiki/socket)</span><br>	<span class="hljs-comment">#`getaddrinfo`会返回服务器的所有网卡信息， 每个网卡都要监听客户端的请求并返回创建的sockets</span><br><span class="hljs-keyword">for</span> res <span class="hljs-keyword">in</span> set(socket.getaddrinfo(address, port, family, socket.SOCK.STREAM, <span class="hljs-number">0</span>, flags)):<br>	af, socktype, proto, canoname, sockaddr = res<br>	<span class="hljs-keyword">try</span>:<br>		<span class="hljs-comment">#创建套节字</span><br>		sock = socket.socket(af, socktype, proto)<br>	<span class="hljs-keyword">except</span> socket.error <span class="hljs-keyword">as</span> e:<br>		<span class="hljs-keyword">if</span> e.args[<span class="hljs-number">0</span>] == errno.EAFNOSUPPORT:<br>			<span class="hljs-keyword">continue</span><br>		<span class="hljs-keyword">raise</span><br>	set_close_exec(sock.fileno())<br>	<span class="hljs-keyword">if</span> os.name != <span class="hljs-string">'nt'</span>:<br>		<span class="hljs-comment">#TCP连接中，recv等函数默认为阻塞模式(block)，</span><br>		<span class="hljs-comment">#即直到有数据到来之前函数不会返回，</span><br>		<span class="hljs-comment">#而我们有时则需要一种超时机制使其在一定时间后返回而不管是否有数据到来，</span><br>		<span class="hljs-comment">#这里我们就会用到setsockopt()函数 见 [setsockopt](http://blog.chinaunix.net/uid-25749806-id-348637.html)</span><br>		sock.setsockopt(socket.SOL_SOCKET, socket.SOREUSERADDR, <span class="hljs-number">1</span>)<br>	<span class="hljs-comment">#在linux ipv6 sockets 也接受 ipv4，这样的话不能同时绑定 ipv4 和 ipv6.为了方便，在ipv6 sockets中总是禁用ipv4 </span><br>	<span class="hljs-keyword">if</span> af == socket.AF_INET6:<br>		<span class="hljs-keyword">if</span> hasattr(socket, <span class="hljs-string">"IPPROTO_IPV6"</span>):<br>			sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY)<br>	sock.setblocking(<span class="hljs-number">0</span>)<br>	sock.bind(sockaddr)<br>	<span class="hljs-comment">#默认设定等待被处理的连接最大个数</span><br>	sock.listen(backlog)<br>	sockets.append(sock)<br><span class="hljs-keyword">return</span> sockets<br></code></pre></td></tr></table></figure>
-
+<pre><code class="python">sockets = []
+if address == &quot;&quot;:
+    address = None
+if not socket.has_ipv6 and family == socket.AF_UNSPEC:
+    family = socket.AF_INET
+if flags is None:
+    flags = socket.AI_PASSIVE
+    #见 [getaddrinfo](https://github.com/zs1621/pythostudy/wiki/socket)
+    #`getaddrinfo`会返回服务器的所有网卡信息， 每个网卡都要监听客户端的请求并返回创建的sockets
+for res in set(socket.getaddrinfo(address, port, family, socket.SOCK.STREAM, 0, flags)):
+    af, socktype, proto, canoname, sockaddr = res
+    try:
+        #创建套节字
+        sock = socket.socket(af, socktype, proto)
+    except socket.error as e:
+        if e.args[0] == errno.EAFNOSUPPORT:
+            continue
+        raise
+    set_close_exec(sock.fileno())
+    if os.name != &#39;nt&#39;:
+        #TCP连接中，recv等函数默认为阻塞模式(block)，
+        #即直到有数据到来之前函数不会返回，
+        #而我们有时则需要一种超时机制使其在一定时间后返回而不管是否有数据到来，
+        #这里我们就会用到setsockopt()函数 见 [setsockopt](http://blog.chinaunix.net/uid-25749806-id-348637.html)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SOREUSERADDR, 1)
+    #在linux ipv6 sockets 也接受 ipv4，这样的话不能同时绑定 ipv4 和 ipv6.为了方便，在ipv6 sockets中总是禁用ipv4 
+    if af == socket.AF_INET6:
+        if hasattr(socket, &quot;IPPROTO_IPV6&quot;):
+            sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY)
+    sock.setblocking(0)
+    sock.bind(sockaddr)
+    #默认设定等待被处理的连接最大个数
+    sock.listen(backlog)
+    sockets.append(sock)
+return sockets</code></pre>
 <p><a name="add_accept_handler" id="add_accept_handler"><strong>add_accept_handler</strong></a>: 添加一个<code>IOLoop</code>事件去接受新的连接在 <code>sock</code></p>
 <blockquote>
 <p>当一个连接被接受了， <code>callback(connection, address)</code>(<code>connection</code>是socket对象， <code>address</code>是连接的另外结尾处的地址)将会运行</p>
 </blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> io_loop <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br> 	io_loop = IOLoop.current()<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">accept_handler</span><span class="hljs-params">(fd, events)</span>:</span><br>	<span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:<br>		<span class="hljs-keyword">try</span>:<br>			connection, address = sock.accept()<br>		<span class="hljs-keyword">except</span> socket.error <span class="hljs-keyword">as</span> e:<br>			<span class="hljs-comment">#EWOULDBLOCK 和 EAGAIN 表明我们</span><br>			<span class="hljs-comment">#已经接受了每个可以接受的连接</span><br>			<span class="hljs-comment">#具体见[EWOULDBLOCK](http://stackoverflow.com/questions/3647539/socket-error-errno-ewouldblock)</span><br>			<span class="hljs-keyword">if</span> e.args[<span class="hljs-number">0</span>] <span class="hljs-keyword">in</span> (errno.EWOULDBLOCK, errno.EAGAIN):<br>				<span class="hljs-keyword">return</span><br>			<span class="hljs-comment">#ECONNABORTED 表明有个连接还在接受队列时被关闭了</span><br>			<span class="hljs-keyword">if</span> e.args[<span class="hljs-number">0</span>] == errno.ECONNABORTED:<br>				<span class="hljs-keyword">continue</span><br>			<span class="hljs-keyword">raise</span><br>		callback(connection, address)<br>io_loop.add_handler(sock.fileno(), accept_handler, IOLoop.READ)<br></code></pre></td></tr></table></figure>
-
+<pre><code class="python">if io_loop is None:
+     io_loop = IOLoop.current()
+def accept_handler(fd, events):
+    while True:
+        try:
+            connection, address = sock.accept()
+        except socket.error as e:
+            #EWOULDBLOCK 和 EAGAIN 表明我们
+            #已经接受了每个可以接受的连接
+            #具体见[EWOULDBLOCK](http://stackoverflow.com/questions/3647539/socket-error-errno-ewouldblock)
+            if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                return
+            #ECONNABORTED 表明有个连接还在接受队列时被关闭了
+            if e.args[0] == errno.ECONNABORTED:
+                continue
+            raise
+        callback(connection, address)
+io_loop.add_handler(sock.fileno(), accept_handler, IOLoop.READ)</code></pre>
 
     </div>
 </article>
