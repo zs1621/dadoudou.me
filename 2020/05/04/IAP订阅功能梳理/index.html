@@ -18,7 +18,7 @@
 <meta property="og:image" content="https://dadoudou.me/2020/05/04/IAP%E8%AE%A2%E9%98%85%E5%8A%9F%E8%83%BD%E6%A2%B3%E7%90%86/image-20200504170848061.png">
 <meta property="og:image" content="https://dadoudou.me/2020/05/04/IAP%E8%AE%A2%E9%98%85%E5%8A%9F%E8%83%BD%E6%A2%B3%E7%90%86/image-20200504163524179.png">
 <meta property="article:published_time" content="2020-05-04T00:10:08.000Z">
-<meta property="article:modified_time" content="2020-05-04T11:55:34.947Z">
+<meta property="article:modified_time" content="2020-05-05T10:46:50.909Z">
 <meta property="article:author" content="zs1621">
 <meta property="article:tag" content="Applepay">
 <meta property="article:tag" content="iap">
@@ -241,6 +241,41 @@ CREATE TABLE `trade_payment_applepay` (
 <li>了解 in-app-purchase sandbox 背景  如下图</li>
 </ul>
 <p><img src="./image-20200504163524179.png" alt="image-20200504163524179.png"></p>
+<h3 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h3><ul>
+<li>苹果还有订阅 subscribe 接口, <a href="https://developer.apple.com/documentation/appstoreservernotifications/" target="_blank" rel="noopener">订阅文档</a> 当订阅发生改动时会向你的服务器发送通知. 这个为了订阅时效性可以选择接入。 我们这边只是写了接口 把订阅的数据存到database 没有做具体逻辑; 数据结构如下 </li>
+</ul>
+<pre><code class="mysql">/******************************************/
+/*   DatabaseName = trade   */
+/*   TableName = trade_payment_applepay_subscribe   */
+/******************************************/
+CREATE TABLE `trade_payment_applepay_subscribe` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created` datetime(6) NOT NULL,
+  `modified` datetime(6) NOT NULL,
+  `is_removed` tinyint(1) NOT NULL,
+  `user_id` int(11) NOT NULL DEFAULT 0,
+  `order_no` varchar(64) NOT NULL DEFAULT &#39;&#39;,
+  `auto_renew_adam_id` varchar(64) NOT NULL,
+  `auto_renew_product_id` varchar(64) NOT NULL,
+  `auto_renew_status` tinyint(1) NOT NULL,
+  `auto_renew_status_change_date` datetime(6) NOT NULL,
+  `auto_renew_status_change_date_ms` bigint(20) NOT NULL,
+  `environment` varchar(16) NOT NULL,
+  `expiration_intent` smallint(6) NOT NULL,
+  `latest_expired_receipt` longtext NOT NULL,
+  `latest_expired_receipt_info` longtext NOT NULL,
+  `latest_receipt` longtext NOT NULL,
+  `latest_receipt_info` longtext NOT NULL,
+  `notification_type` varchar(64) NOT NULL,
+  `unified_receipt` longtext NOT NULL,
+  `password` varchar(128) NOT NULL,
+  `transaction_id` varchar(32) NOT NULL,
+  `original_transaction_id` varchar(32) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `trade_payment_applepay_subscribe_user_id_0a63f52c_idx` (`user_id`),
+  KEY `trade_payment_applepay_subscribe_OTI_0a63f52c_idx` (`original_transaction_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=190 DEFAULT CHARSET=utf8
+;</code></pre>
 
     </div>
 </article>
