@@ -114,21 +114,22 @@ co(compose(stack)) (function (err) {
     </div>
 </article>
 
-<div id="gitment_container"></div>
-<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
-<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
-<script>
-var gitment = new Gitment({
-    id: 'Wed May 28 2014 10:37:00 GMT+0800',
-    owner: 'zs1621',
-    repo: 'dadoudou.me',
-    oauth: {
-        client_id: '01408711d79d72f03315',
-        client_secret: '238abe81d923c8392d36e3cdb14d29961f1870b2',
-    },
-})
-gitment.render('gitment_container')
+<div id="dadoudou-comment">
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<!-- <script src="https://geektutu.github.io/hexo-theme-geektutu/js/gitalk.min.js"></script> -->
+<script src="https://unpkg.com/gitalk/dist/gitalk.js"></script>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        accessToken: '997eb7f03bafcfef0d6b3030543c5a6e903fb771',
+        id: window.location.pathname,
+        repo: 'dadoudou.me',
+        owner: 'zs1621',
+        admin: '舜',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
 </script>
+</div>
 
 <div id="paginator">
     
