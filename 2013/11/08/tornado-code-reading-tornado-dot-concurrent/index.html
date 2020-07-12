@@ -228,9 +228,26 @@ def add_done_callback(self, fn):
     </div>
 </article>
 
+<div id="gitment_container"></div>
+<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+var gitment = new Gitment({
+    id: 'Fri Nov 08 2013 13:38:00 GMT+0800',
+    owner: 'zs1621',
+    repo: 'dadoudou.me',
+    oauth: {
+        client_id: '01408711d79d72f03315',
+        client_secret: '238abe81d923c8392d36e3cdb14d29961f1870b2',
+    },
+})
+gitment.render('gitment_container')
+</script>
+
 <div id="paginator">
     
 </div>
+
 
     </div>
 </div>
