@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     
     <title>
-        co Coding Reading |
+        django微服务思考 |
         
         舜子</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="##co  最近co从版本3.1.0 -&gt; 4.0.0 主要改动在与 thunk -&gt; promise, 详情见stop advocating thunks,version 4.0.0 目前仍然支持thunk  主题 理解co原理   co对我来说理解比较困难，这个教程看起来不错, 但是需要知道这篇教程是针对3.1.0,但是原理是以一样的参考 理解co co原理理解2   了解thun">
+    <meta name="description" content="当前情况 前情提要: 业务的堆叠, 以 django为基本框架, 每次新的业务都新建一个 app, 本地的开发环境，是启动一个 docker-compose 环境， 基于这个 dev.yml 环境做开发, 多人合作的话, 每次本地需要重新初始化这个 compose 环境(不看同事的代码的话-很多时候是有数据库变更的)。 随着 app 的增多遇到几个问题   app 增多导致每次单元测试时间变长(当">
 <meta property="og:type" content="article">
-<meta property="og:title" content="co Coding Reading">
-<meta property="og:url" content="https://dadoudou.me/2014/11/27/co-coding-reading/">
+<meta property="og:title" content="django微服务思考">
+<meta property="og:url" content="https://dadoudou.me/2020/12/06/django%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%80%9D%E8%80%83/">
 <meta property="og:site_name" content="舜子">
-<meta property="og:description" content="##co  最近co从版本3.1.0 -&gt; 4.0.0 主要改动在与 thunk -&gt; promise, 详情见stop advocating thunks,version 4.0.0 目前仍然支持thunk  主题 理解co原理   co对我来说理解比较困难，这个教程看起来不错, 但是需要知道这篇教程是针对3.1.0,但是原理是以一样的参考 理解co co原理理解2   了解thun">
+<meta property="og:description" content="当前情况 前情提要: 业务的堆叠, 以 django为基本框架, 每次新的业务都新建一个 app, 本地的开发环境，是启动一个 docker-compose 环境， 基于这个 dev.yml 环境做开发, 多人合作的话, 每次本地需要重新初始化这个 compose 环境(不看同事的代码的话-很多时候是有数据库变更的)。 随着 app 的增多遇到几个问题   app 增多导致每次单元测试时间变长(当">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2014-11-27T02:15:56.000Z">
-<meta property="article:modified_time" content="2020-02-02T03:35:41.014Z">
+<meta property="article:published_time" content="2020-12-06T12:10:31.000Z">
+<meta property="article:modified_time" content="2020-12-06T12:33:55.421Z">
 <meta property="article:author" content="zs1621">
 <meta name="twitter:card" content="summary">
     
@@ -51,34 +51,20 @@
 <div id="content-outer" class="container">
     <div id="content-inner">
         <article id="post">
-    <h1 id="post-title">co Coding Reading</h1>
-    <time id="post-date" datetime="2014-11-27T02:15:56.000Z">
-        十一月 27, 2014
+    <h1 id="post-title">django微服务思考</h1>
+    <time id="post-date" datetime="2020-12-06T12:10:31.000Z">
+        十二月 06, 2020
     </time>
     <div id="post-content" class="markdown-body">
-        <p>##<a href="https://github.com/tj/co" target="_blank" rel="noopener">co</a></p>
-<blockquote>
-<p>最近co从版本3.1.0 -&gt; 4.0.0 主要改动在与 thunk -&gt; promise, 详情见<a href="https://github.com/tj/co/issues/143" target="_blank" rel="noopener">stop advocating thunks</a>,version 4.0.0 目前仍然支持thunk</p>
+        <h3 id="当前情况"><a href="#当前情况" class="headerlink" title="当前情况"></a>当前情况</h3><blockquote>
+<p>前情提要: 业务的堆叠, 以 django为基本框架, 每次新的业务都新建一个 app, 本地的开发环境，是启动一个 docker-compose 环境， 基于这个 dev.yml 环境做开发, 多人合作的话, 每次本地需要重新初始化这个 compose 环境(不看同事的代码的话-很多时候是有数据库变更的)。 随着 app 的增多遇到几个问题</p>
 </blockquote>
-<h2 id="主题"><a href="#主题" class="headerlink" title="主题"></a>主题</h2><ul>
-<li>理解co原理</li>
-</ul>
 <ul>
-<li>co对我来说理解比较困难，这个教程看起来不错, 但是需要知道这篇教程是针对3.1.0,但是原理是以一样的<br>参考 <a href="http://www.html-js.com/article/Nodejs-commonly-used-modules-detailed-address-correction-in-Pyramid-Harmony-Generator-yield-ES6-CO-framework-of-learning" target="_blank" rel="noopener">理解co</a></li>
-<li><a href="http://boke.io/gao-ding-koa-zhi-coyuan-ma/" target="_blank" rel="noopener">co原理理解2</a></li>
-</ul>
-<ul>
-<li>了解thunk,promise<ul>
-<li>所有的这些都源于<a href="http://callbackhell.com/" target="_blank" rel="noopener">callbackhell</a></li>
-</ul>
+<li><p>app 增多导致每次单元测试时间变长(当前编译加单元测试需要15分钟) 本地开发效率+调试成本增加</p>
+</li>
+<li><p>有些 app 业务开发完成完全成变动很少， 希望可以独立部署(减少频繁变更，导致的服务不可用影响到这些 app 对外服务)</p>
 </li>
 </ul>
-<h3 id="promise"><a href="#promise" class="headerlink" title="promise"></a>promise</h3><pre><code>先放几个链接</code></pre><ul>
-<li><a href="htpps://promisesaplus.com/">promise/A+</a></li>
-<li><a href="http://mweb.baidu.com/p/promise-introduction.html" target="_blank" rel="noopener">百度无线</a></li>
-<li><a href="https://github.com/alsotang/node-lessons/tree/master/lesson17" target="_blank" rel="noopener">github</a> </li>
-</ul>
-<p>   TBC</p>
 
     </div>
 </article>
